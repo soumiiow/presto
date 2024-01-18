@@ -18,6 +18,8 @@ import com.facebook.airlift.log.Logging;
 import com.facebook.presto.testing.QueryRunner;
 import com.facebook.presto.tests.DistributedQueryRunner;
 
+import static com.facebook.presto.hive.HiveTestUtils.getProperty;
+
 public class HiveExternalWorkerQueryRunner
 {
     private HiveExternalWorkerQueryRunner() {}
@@ -28,10 +30,13 @@ public class HiveExternalWorkerQueryRunner
         // You need to add "--user user" to your CLI for your queries to work.
         Logging.initialize();
 
-        // Create tables before launching distributed runner.
-        QueryRunner javaQueryRunner = PrestoNativeQueryRunnerUtils.createJavaQueryRunner(false);
-        NativeQueryRunnerUtils.createAllTables(javaQueryRunner);
-        javaQueryRunner.close();
+        // if user provides config directory path, skip this step
+        if(!getProperty("CONFIG_DIR_PATH").isPresent()) {
+            // Create tables before launching distributed runner.
+            QueryRunner javaQueryRunner = PrestoNativeQueryRunnerUtils.createJavaQueryRunner(false);
+            NativeQueryRunnerUtils.createAllTables(javaQueryRunner);
+            javaQueryRunner.close();
+       }
 
         // Launch distributed runner.
         DistributedQueryRunner queryRunner = (DistributedQueryRunner) PrestoNativeQueryRunnerUtils.createQueryRunner(false);

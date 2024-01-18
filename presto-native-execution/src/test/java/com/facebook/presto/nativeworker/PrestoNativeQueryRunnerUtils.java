@@ -34,6 +34,7 @@ import java.util.UUID;
 import static com.facebook.presto.hive.HiveTestUtils.getProperty;
 import static com.facebook.presto.nativeworker.NativeQueryRunnerUtils.getNativeWorkerHiveProperties;
 import static com.facebook.presto.nativeworker.NativeQueryRunnerUtils.getNativeWorkerSystemProperties;
+import static com.facebook.presto.util.PropertiesUtil.loadProperties;
 import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
 import static org.testng.Assert.assertTrue;
@@ -61,7 +62,8 @@ public class PrestoNativeQueryRunnerUtils
                 nativeQueryRunnerParameters.workerCount,
                 cacheMaxSize,
                 DEFAULT_STORAGE_FORMAT,
-                addStorageFormatToPath);
+                addStorageFormatToPath,
+                nativeQueryRunnerParameters.configDirectoryPath);
     }
 
     public static QueryRunner createQueryRunner(
@@ -70,7 +72,8 @@ public class PrestoNativeQueryRunnerUtils
             Optional<Integer> workerCount,
             int cacheMaxSize,
             String storageFormat,
-            boolean addStorageFormatToPath)
+            boolean addStorageFormatToPath,
+            Optional<Path> workerConfigDirPath)
             throws Exception
     {
         QueryRunner defaultQueryRunner = createJavaQueryRunner(dataDirectory, storageFormat, addStorageFormatToPath);
@@ -81,7 +84,7 @@ public class PrestoNativeQueryRunnerUtils
 
         defaultQueryRunner.close();
 
-        return createNativeQueryRunner(dataDirectory.get().toString(), prestoServerPath.get(), workerCount, cacheMaxSize, true, Optional.empty(), storageFormat, addStorageFormatToPath);
+        return createNativeQueryRunner(dataDirectory.get().toString(), prestoServerPath.get(), workerCount, cacheMaxSize, true, Optional.empty(), storageFormat, addStorageFormatToPath, workerConfigDirPath);
     }
 
     public static QueryRunner createJavaQueryRunner()
@@ -148,21 +151,32 @@ public class PrestoNativeQueryRunnerUtils
             boolean useThrift,
             Optional<String> remoteFunctionServerUds,
             String storageFormat,
-            boolean addStorageFormatToPath)
+            boolean addStorageFormatToPath,
+            Optional<Path> configDirectoryPath)
             throws Exception
     {
+        ImmutableMap <String, String> extraProperties = (configDirectoryPath.isPresent()) ?
+                (ImmutableMap<String, String>)loadProperties(configDirectoryPath.get()
+                        .resolve("config.properties").toFile()) :
+                ImmutableMap.<String, String>builder()
+                .put("http-server.http.port", "8080")
+                .put("experimental.internal-communication.thrift-transport-enabled", String.valueOf(useThrift))
+                .putAll(getNativeWorkerSystemProperties())
+                .build();
+
+        ImmutableMap <String, String> hiveProperties = (configDirectoryPath.isPresent()) ?
+                (ImmutableMap<String, String>) loadProperties(configDirectoryPath.get()
+                        .resolve("catalog/hive.properties").toFile()) :
+                (ImmutableMap<String, String>) getNativeWorkerHiveProperties(storageFormat);
+
         // Make query runner with external workers for tests
         return HiveQueryRunner.createQueryRunner(
                 ImmutableList.of(),
                 ImmutableList.of(),
-                ImmutableMap.<String, String>builder()
-                        .put("http-server.http.port", "8080")
-                        .put("experimental.internal-communication.thrift-transport-enabled", String.valueOf(useThrift))
-                        .putAll(getNativeWorkerSystemProperties())
-                        .build(),
+                extraProperties,
                 ImmutableMap.of(),
                 "legacy",
-                getNativeWorkerHiveProperties(storageFormat),
+                hiveProperties,
                 workerCount,
                 Optional.of(Paths.get(addStorageFormatToPath ? dataDirectory + "/" + storageFormat : dataDirectory)),
                 Optional.of((workerIndex, discoveryUri) -> {
@@ -260,7 +274,8 @@ public class PrestoNativeQueryRunnerUtils
                 useThrift,
                 remoteFunctionServerUds,
                 storageFormat,
-                true);
+                true,
+                Optional.empty());
     }
 
     // Start the remote function server. Return the UDS path used to communicate with it.
@@ -294,6 +309,15 @@ public class PrestoNativeQueryRunnerUtils
                 .toAbsolutePath();
         Optional<Integer> workerCount = getProperty("WORKER_COUNT").map(Integer::parseInt);
 
+        Optional<Path> configDirectoryPath = Optional.empty();
+        if(getProperty("CONFIG_DIR_PATH").isPresent()){
+            try {
+                configDirectoryPath = Optional.of(Paths.get(getProperty("CONFIG_DIR_PATH").get()).toAbsolutePath());
+            } catch (Exception e) {
+                log.error("User-specified config directory path is invalid.");
+            }
+        }
+
         assertTrue(Files.exists(prestoServerPath), format("Native worker binary at %s not found. Add -DPRESTO_SERVER=<path/to/presto_server> to your JVM arguments.", prestoServerPath));
         log.info("Using PRESTO_SERVER binary at %s", prestoServerPath);
 
@@ -304,20 +328,22 @@ public class PrestoNativeQueryRunnerUtils
         assertTrue(Files.exists(dataDirectory), format("Data directory at %s is missing. Add -DDATA_DIR=<path/to/data> to your JVM arguments to specify the path", dataDirectory));
         log.info("using DATA_DIR at %s", dataDirectory);
 
-        return new NativeQueryRunnerParameters(prestoServerPath, dataDirectory, workerCount);
+        return new NativeQueryRunnerParameters(prestoServerPath, dataDirectory, configDirectoryPath, workerCount);
     }
 
     public static class NativeQueryRunnerParameters
     {
         public final Path serverBinary;
         public final Path dataDirectory;
+        public final Optional<Path> configDirectoryPath;
         public final Optional<Integer> workerCount;
 
-        public NativeQueryRunnerParameters(Path serverBinary, Path dataDirectory, Optional<Integer> workerCount)
+        public NativeQueryRunnerParameters(Path serverBinary, Path dataDirectory, Optional<Path> configDirectoryPath, Optional<Integer> workerCount)
         {
             this.serverBinary = requireNonNull(serverBinary, "serverBinary is null");
             this.dataDirectory = requireNonNull(dataDirectory, "dataDirectory is null");
             this.workerCount = requireNonNull(workerCount, "workerCount is null");
+            this.configDirectoryPath = requireNonNull(configDirectoryPath, "configDirectoryPath is null");
         }
     }
 
