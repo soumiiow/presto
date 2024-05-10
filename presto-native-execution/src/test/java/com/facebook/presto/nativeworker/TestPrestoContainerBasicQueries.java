@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
+import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
@@ -40,9 +41,11 @@ public class TestPrestoContainerBasicQueries
     private GenericContainer<?> worker;
 
     @BeforeClass
-    public void setUp()
+    public void setup()
             throws InterruptedException
     {
+        // TODO: This framework is tested only in Ubuntu x86_64, as there is no support to run the native docker images in ARM based system,
+        // Once this is fixed, the container details can be added as properties in VM options for testing in IntelliJ.
         coordinator = new GenericContainer<>(PRESTO_COORDINATOR_IMAGE)
                 .withExposedPorts(8081)
                 .withNetwork(network).withNetworkAliases("presto-coordinator")
@@ -128,5 +131,23 @@ public class TestPrestoContainerBasicQueries
         String countOrders = "SELECT COUNT(*) FROM orders";
         Container.ExecResult count = executeQuery(countOrders);
         assertTrue(count.getStdout().contains("15000"), "Incorrect count.");
+
+        String totalDiscount = "SELECT SUM(l_discount) FROM lineitem WHERE l_discount != 0.04";
+        Container.ExecResult total = executeQuery(totalDiscount);
+        assertTrue(total.getStdout().contains("2786.779999999882"), "Incorrect total discount.");
+
+        String joinOrders = "SELECT c.c_name, c.c_address, o.o_orderdate FROM customer c JOIN orders o ON c.c_custkey = o.o_custkey ORDER BY o.o_orderdate DESC";
+        Container.ExecResult join = executeQuery(joinOrders);
+        String[] lines = join.getStdout().split("\n");
+        int orders = 0;
+        for (String line : lines) {
+            if (line.contains("Customer#")) {
+                orders++;
+            }
+            else {
+                fail("Invalid order details" + line + "\n");
+            }
+        }
+        assertEquals(orders, 172, "Mismatch in joining orders");
     }
 }

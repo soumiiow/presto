@@ -1,14 +1,14 @@
 # Prestissimo: Functional Testing Using Containers
 
 This Java test framework allows you to run test cases by deploying Presto coordinator and worker nodes in containers.
-For more information, see [Testcontainers for Java](https://java.testcontainers.org/)
-#### To set up Docker services and basic build tools on Ubuntu 22.04 x86_64 machine, run the following command:
+For more information, see [Testcontainers for Java](https://java.testcontainers.org/).
+#### To set up Docker services and basic build tools on Ubuntu 22.04 x86_64 machine, run the following commands:
 ```
 apt install podman-docker
 apt install make
 apt install cmake
 ```
-Note:  Run the following commands to fix an open bug related to CNI network in podman.
+Run the following commands to fix an open bug related to the CNI network in podman.
 Reference: https://bugs.launchpad.net/ubuntu/+source/libpod/+bug/2024394
 ```
 curl -O http://archive.ubuntu.com/ubuntu/pool/universe/g/golang-github-containernetworking-plugins/containernetworking-plugins_1.1.1+ds1-3build1_amd64.deb
@@ -45,7 +45,6 @@ DOCKER_HOST=unix:///run/podman/podman.sock
 ```
 Then, run or debug the test.
 
-#### Note: Existing java and native docker files are reused for functional testing. The coordinator and worker configurations are available in `presto-native-execution/testcontainers`.
-
-
-
+##### Note
+* Existing java and native docker files are reused for functional testing. The coordinator and worker configurations are available in `presto-native-execution/testcontainers`.
+* The functional test framework has been tested with the tpch.tiny schema, using standard column naming. Please note that this configuration is a current limitation, as it has only been tested with this schema and does not require any data loading.
