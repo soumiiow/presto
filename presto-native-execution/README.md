@@ -249,3 +249,4 @@ To build container images and do functional tests, see [Prestissimo: Functional 
 
 ## Troubleshooting
 For known build issues check the wiki page [Troubleshooting known build issues](https://github.com/prestodb/presto/wiki/Troubleshooting-known-build-issues).
+
