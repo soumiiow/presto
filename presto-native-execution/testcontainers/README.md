@@ -46,5 +46,5 @@ DOCKER_HOST=unix:///run/podman/podman.sock
 Then, run or debug the test.
 
 ##### Note
-* Existing java and native docker files are reused for functional testing. The coordinator and worker configurations are available in `presto-native-execution/testcontainers`.
+* Existing java and native docker files are reused for functional testing. The coordinator and worker configurations are generated in the utility class.
 * The functional test framework has been tested with the tpch.tiny schema, using standard column naming. Please note that this configuration is a current limitation, as it has only been tested with this schema and does not require any data loading.
