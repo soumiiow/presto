@@ -362,7 +362,7 @@
                                     <contextDirectory>${project.parent.basedir}/docker/</contextDirectory>
                                     <dockerfile>${project.parent.basedir}/docker/Dockerfile</dockerfile>
                                     <buildArgs>
-                                        <PRESTO_VERSION>0.289-SNAPSHOT</PRESTO_VERSION>
+                                        <PRESTO_VERSION>${presto.version}</PRESTO_VERSION>
                                     </buildArgs>
                                     <writeTestMetadata>false</writeTestMetadata>
                                 </configuration>
