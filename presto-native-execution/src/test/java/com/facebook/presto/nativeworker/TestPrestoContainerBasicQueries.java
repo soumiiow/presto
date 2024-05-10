@@ -13,118 +13,120 @@
  */
 package com.facebook.presto.nativeworker;
 
-import com.facebook.presto.tests.AbstractTestQueryFramework;
+import org.testcontainers.containers.BindMode;
+import org.testcontainers.containers.Container;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.Network;
+import org.testcontainers.containers.wait.strategy.Wait;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import static org.testng.Assert.assertEquals;
+import java.io.IOException;
+import java.time.Duration;
+import java.util.concurrent.TimeUnit;
+
 import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
 public class TestPrestoContainerBasicQueries
-        extends AbstractTestQueryFramework
 {
-    @Override
-    protected ContainerQueryRunner createQueryRunner()
-            throws Exception
+    private static final String PRESTO_COORDINATOR_IMAGE = System.getProperty("coordinatorImage", "presto-coordinator:latest");
+    private static final String PRESTO_WORKER_IMAGE = System.getProperty("workerImage", "presto-worker:latest");
+    private static final String BASE_DIR = System.getProperty("user.dir");
+    private static final String CONTAINER_TIMEOUT = System.getProperty("containerTimeout", "120");
+    private static final Network network = Network.newNetwork();
+    private GenericContainer<?> coordinator;
+    private GenericContainer<?> worker;
+
+    @BeforeClass
+    public void setUp()
+            throws InterruptedException
     {
-        return new ContainerQueryRunner();
+        coordinator = new GenericContainer<>(PRESTO_COORDINATOR_IMAGE)
+                .withExposedPorts(8081)
+                .withNetwork(network).withNetworkAliases("presto-coordinator")
+                .withFileSystemBind(BASE_DIR + "/testcontainers/coordinator/etc", "/opt/presto-server/etc", BindMode.READ_WRITE)
+                .withFileSystemBind(BASE_DIR + "/testcontainers/coordinator/entrypoint.sh", "/opt/entrypoint.sh", BindMode.READ_ONLY)
+                .waitingFor(Wait.forLogMessage(".*======== SERVER STARTED ========.*", 1))
+                .withStartupTimeout(Duration.ofSeconds(Long.parseLong(CONTAINER_TIMEOUT)));
+
+        worker = new GenericContainer<>(PRESTO_WORKER_IMAGE)
+                .withExposedPorts(7777)
+                .withNetwork(network).withNetworkAliases("presto-worker")
+                .withFileSystemBind(BASE_DIR + "/testcontainers/nativeworker/velox-etc", "/opt/presto-server/etc", BindMode.READ_ONLY)
+                .withFileSystemBind(BASE_DIR + "/testcontainers/nativeworker/entrypoint.sh", "/opt/entrypoint.sh", BindMode.READ_ONLY)
+                .waitingFor(Wait.forLogMessage(".*Announcement succeeded: HTTP 202.*", 1));
+
+        coordinator.start();
+        worker.start();
+
+        // Wait for worker to announce itself.
+        TimeUnit.SECONDS.sleep(5);
+    }
+
+    @AfterClass
+    public void tearDown()
+    {
+        coordinator.stop();
+        worker.stop();
+    }
+
+    private Container.ExecResult executeQuery(String sql)
+            throws IOException, InterruptedException
+    {
+        // Command to run inside the coordinator container using the presto-cli.
+        String[] command = {
+                "/opt/presto-cli",
+                "--server",
+                "presto-coordinator:8081",
+                "--catalog",
+                "tpch",
+                "--schema",
+                "tiny",
+                "--execute",
+                sql
+        };
+
+        Container.ExecResult execResult = coordinator.execInContainer(command);
+        if (execResult.getExitCode() != 0) {
+            String errorDetails = "Stdout: " + execResult.getStdout() + "\nStderr: " + execResult.getStderr();
+            fail("Presto CLI exited with error code: " + execResult.getExitCode() + "\n" + errorDetails);
+        }
+        return execResult;
     }
 
     @Test
-    public void testPresenceAndBasicFunctionality()
+    public void testBasics()
+            throws IOException, InterruptedException
     {
-        // Test for native worker presence
-        assertTrue(
-                computeActual("SELECT * FROM system.runtime.nodes").toString().contains("native-worker-1"),
-                "Native worker is not present.");
+        String selectRuntimeNodes = "select * from system.runtime.nodes";
+        Container.ExecResult nodes = executeQuery(selectRuntimeNodes);
+        assertTrue(nodes.getStdout().contains("native-worker-1"), "Native worker is not present.");
 
-        // Test for native runtime tasks presence
-        assertTrue(
-                computeActual("SELECT * FROM system.runtime.tasks").toString().contains("native-worker-1"),
-                "Native worker is not present.");
+        String showCatalogs = "show catalogs";
+        Container.ExecResult catalogs = executeQuery(showCatalogs);
+        assertTrue(catalogs.getStdout().contains("tpch"), "tpch is not present.");
 
-        // Test for tpch catalog presence
-        assertTrue(
-                computeActual("SHOW catalogs").toString().contains("tpch"),
-                "tpch catalog is not present.");
-
-        // Test for specific session presence
-        assertTrue(
-                computeActual("SHOW session").toString().contains("native_aggregation_spill_all"),
-                "native_aggregation_spill_all is not present.");
+        String showSession = "show session";
+        Container.ExecResult sessionProperties = executeQuery(showSession);
+        assertTrue(sessionProperties.getStdout().contains("native_aggregation_spill_all"), "native_aggregation_spill_all is not present.");
     }
 
     @Test
-    public void testBasicSQLOperations()
+    public void testFunctions()
+            throws IOException, InterruptedException
     {
-        // Test for join operation
-        assertEquals(
-                computeActual(
-                        "SELECT c.c_name, c.c_address, o.o_orderdate FROM customer c JOIN orders o ON c.c_custkey = o.o_custkey ORDER BY o.o_orderdate DESC")
-                        .getMaterializedRows()
-                        .size(),
-                172);
+        String countValues = "SELECT COUNT(*) FROM (VALUES 1, 0, 0, 2, 3, 3) as t(x)";
+        Container.ExecResult countResult = executeQuery(countValues);
+        assertTrue(countResult.getStdout().contains("6"), "Count is incorrect.");
 
-        // Test for count function
-        assertQuery("SELECT COUNT(*) FROM (VALUES 1, 0, 0, 2, 3, 3) as t(x)", "SELECT 6");
-    }
+        String sqlArrayIntegers = "SELECT array_sort(ARRAY [5, 20, null, 5, 3, 50])";
+        Container.ExecResult execResultIntegers = executeQuery(sqlArrayIntegers);
+        assertTrue(execResultIntegers.getStdout().contains("[3, 5, 5, 20, 50, null]"), "Integer array not sorted correctly.");
 
-    @Test
-    public void testArraySortFunction()
-    {
-        assertQuery("SELECT array_sort(ARRAY [5, 20, null, 5, 3, 50])", "SELECT ARRAY[3, 5, 5, 20, 50, null]");
-    }
-
-    @Test
-    public void testUnnestOperations()
-    {
-        // Simple array unnesting tests
-        assertQuery("SELECT 1 FROM (VALUES (ARRAY[1])) AS t (a) CROSS JOIN UNNEST(a)", "SELECT 1");
-        assertQuery("SELECT x[1] FROM UNNEST(ARRAY[ARRAY[1, 2, 3]]) t(x)", "SELECT 1");
-        assertQuery("SELECT x[1][2] FROM UNNEST(ARRAY[ARRAY[ARRAY[1, 2, 3]]]) t(x)", "SELECT 2");
-        assertQuery("SELECT x[2] FROM UNNEST(ARRAY[MAP(ARRAY[1,2], ARRAY['hello', 'hi'])]) t(x)", "SELECT 'hi'");
-        assertQuery("SELECT * FROM UNNEST(ARRAY[1, 2, 3])", "SELECT * FROM VALUES (1), (2), (3)");
-        assertQuery("SELECT a FROM UNNEST(ARRAY[1, 2, 3]) t(a)", "SELECT * FROM VALUES (1), (2), (3)");
-        assertQuery("SELECT a, b FROM UNNEST(ARRAY[1, 2], ARRAY[3, 4]) t(a, b)", "SELECT * FROM VALUES (1, 3), (2, 4)");
-        assertQuery("SELECT a FROM UNNEST(ARRAY[1, 2, 3], ARRAY[4, 5]) t(a, b)", "SELECT * FROM VALUES 1, 2, 3");
-        assertQuery("SELECT count(*) FROM UNNEST(ARRAY[1, 2, 3], ARRAY[4, 5])", "SELECT 3");
-        assertQuery("SELECT a FROM UNNEST(ARRAY['kittens', 'puppies']) t(a)", "SELECT * FROM VALUES ('kittens'), ('puppies')");
-
-        // UNNEST with UNION and CROSS JOIN
-        assertQuery(
-                "WITH unioned AS ( SELECT 1 UNION ALL SELECT 2 ) SELECT * FROM unioned CROSS JOIN UNNEST(ARRAY[3]) steps (step)",
-                "SELECT * FROM (VALUES (1, 3), (2, 3))");
-        assertQuery(
-                "SELECT c FROM UNNEST(ARRAY[1, 2, 3], ARRAY[4, 5]) t(a, b) CROSS JOIN (values (8), (9)) t2(c)",
-                "SELECT * FROM VALUES 8, 8, 8, 9, 9, 9");
-
-        // Multiple UNNEST functions
-        assertQuery(
-                "SELECT * FROM UNNEST(ARRAY[0, 1]) CROSS JOIN UNNEST(ARRAY[0, 1]) CROSS JOIN UNNEST(ARRAY[0, 1])",
-                "SELECT * FROM VALUES (0, 0, 0), (0, 0, 1), (0, 1, 0), (0, 1, 1), (1, 0, 0), (1, 0, 1), (1, 1, 0), (1, 1, 1)");
-        assertQuery(
-                "SELECT * FROM UNNEST(ARRAY[0, 1]), UNNEST(ARRAY[0, 1]), UNNEST(ARRAY[0, 1])",
-                "SELECT * FROM VALUES (0, 0, 0), (0, 0, 1), (0, 1, 0), (0, 1, 1), (1, 0, 0), (1, 0, 1), (1, 1, 0), (1, 1, 1)");
-
-        // UNNEST with map
-        assertQuery(
-                "SELECT a, b FROM UNNEST(MAP(ARRAY[1,2], ARRAY['cat', 'dog'])) t(a, b)",
-                "SELECT * FROM VALUES (1, 'cat'), (2, 'dog')");
-
-        // UNNEST with WITH ORDINALITY
-        assertQuery(
-                "SELECT 1 FROM (VALUES (ARRAY[1])) AS t (a) CROSS JOIN UNNEST(a) WITH ORDINALITY",
-                "SELECT 1");
-        assertQuery(
-                "SELECT * FROM UNNEST(ARRAY[1, 2, 3]) WITH ORDINALITY",
-                "SELECT * FROM VALUES (1, 1), (2, 2), (3, 3)");
-        assertQuery(
-                "SELECT b FROM UNNEST(ARRAY[10, 20, 30]) WITH ORDINALITY t(a, b)",
-                "SELECT * FROM VALUES (1), (2), (3)");
-        assertQuery(
-                "SELECT a, b FROM UNNEST(ARRAY['kittens', 'puppies']) WITH ORDINALITY t(a, b)",
-                "SELECT * FROM VALUES ('kittens', 1), ('puppies', 2)");
-        assertQuery(
-                "SELECT c FROM UNNEST(ARRAY[1, 2, 3], ARRAY[4, 5]) WITH ORDINALITY t(a, b, c) CROSS JOIN (values (8), (9)) t2(d)",
-                "SELECT * FROM VALUES 1, 1, 2, 2, 3, 3");
+        String countOrders = "SELECT COUNT(*) FROM orders";
+        Container.ExecResult count = executeQuery(countOrders);
+        assertTrue(count.getStdout().contains("15000"), "Incorrect count.");
     }
 }

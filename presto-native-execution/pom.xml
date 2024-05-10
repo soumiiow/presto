@@ -224,11 +224,6 @@
                 </exclusion>
             </exclusions>
         </dependency>
-        <dependency>
-            <groupId>net.sf.opencsv</groupId>
-            <artifactId>opencsv</artifactId>
-            <version>2.3</version>
-        </dependency>
     </dependencies>
 
     <build>
@@ -367,7 +362,7 @@
                                     <contextDirectory>${project.parent.basedir}/docker/</contextDirectory>
                                     <dockerfile>${project.parent.basedir}/docker/Dockerfile</dockerfile>
                                     <buildArgs>
-                                        <PRESTO_VERSION>${project.version}</PRESTO_VERSION>
+                                        <PRESTO_VERSION>0.289-SNAPSHOT</PRESTO_VERSION>
                                     </buildArgs>
                                     <writeTestMetadata>false</writeTestMetadata>
                                 </configuration>
@@ -386,6 +381,7 @@
                                     <buildArgs>
                                         <BUILD_TYPE>Release</BUILD_TYPE>
                                         <DEPENDENCY_IMAGE>public.ecr.aws/oss-presto/presto-native-dependency:latest</DEPENDENCY_IMAGE>
+                                        <EXTRA_CMAKE_FLAGS>-DPRESTO_ENABLE_PARQUET=ON -DPRESTO_ENABLE_S3=ON</EXTRA_CMAKE_FLAGS>
                                     </buildArgs>
                                     <writeTestMetadata>false</writeTestMetadata>
                                 </configuration>
