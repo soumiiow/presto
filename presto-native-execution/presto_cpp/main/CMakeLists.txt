@@ -11,6 +11,7 @@
 # limitations under the License.
 add_subdirectory(operators)
 add_subdirectory(types)
+add_subdirectory(functions)
 add_subdirectory(http)
 add_subdirectory(common)
 add_subdirectory(thrift)
@@ -97,8 +98,7 @@ target_link_libraries(presto_server presto_server_lib velox_hive_connector
                       velox_tpch_connector)
 
 if(PRESTO_ENABLE_REMOTE_FUNCTIONS)
-  add_library(presto_server_remote_function JsonSignatureParser.cpp
-                                            RemoteFunctionRegisterer.cpp)
+  add_library(presto_server_remote_function JsonSignatureParser.cpp)
 
   target_link_libraries(presto_server_remote_function velox_expression
                         velox_functions_remote ${FOLLY_WITH_DEPENDENCIES})
