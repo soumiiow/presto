@@ -26,6 +26,7 @@
 #include "presto_cpp/main/common/ConfigReader.h"
 #include "presto_cpp/main/common/Counters.h"
 #include "presto_cpp/main/common/Utils.h"
+#include "presto_cpp/main/functions/FunctionMetadata.h"
 #include "presto_cpp/main/http/filters/AccessLogFilter.h"
 #include "presto_cpp/main/http/filters/HttpEndpointLatencyFilter.h"
 #include "presto_cpp/main/http/filters/InternalAuthenticationFilter.h"
@@ -55,7 +56,7 @@
 #include "velox/serializers/PrestoSerializer.h"
 
 #ifdef PRESTO_ENABLE_REMOTE_FUNCTIONS
-#include "presto_cpp/main/RemoteFunctionRegisterer.h"
+#include "presto_cpp/main/functions/RemoteFunctionRegisterer.h"
 #endif
 
 #ifdef __linux__
