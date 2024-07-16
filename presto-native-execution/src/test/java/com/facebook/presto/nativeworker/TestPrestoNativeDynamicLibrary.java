@@ -19,8 +19,10 @@ import com.facebook.presto.testing.QueryRunner;
 import com.facebook.presto.tests.AbstractTestQueryFramework;
 import com.facebook.presto.tests.DistributedQueryRunner;
 import org.intellij.lang.annotations.Language;
+import org.testcontainers.containers.Container;
 import org.testng.annotations.Test;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -36,58 +38,14 @@ import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 @Test(singleThreaded = true)
 public class TestPrestoNativeDynamicLibrary
-        extends AbstractTestQueryFramework
+        extends TestPrestoContainerBasicQueries
 {
-    private static final String REGEX_FUNCTION_NAMESPACE = "native.default.*";
-    private static final String REGEX_SESSION_NAMESPACE = "Native Execution only.*";
-    private static final int FUNCTION_COUNT = 1113;
-
-    @Override
-    protected void createTables()
-    {
-        QueryRunner queryRunner = (QueryRunner) getExpectedQueryRunner();
-        createOrders(queryRunner);
-        createLineitem(queryRunner);
-    }
-
-    @Override
-    protected QueryRunner createQueryRunner() throws Exception
-    {
-        DistributedQueryRunner queryRunner = (DistributedQueryRunner) PrestoNativeQueryRunnerUtils.createQueryRunnerWithSidecar(false);
-        setupNativeFunctionNamespaceManager(queryRunner, "native");
-        setupSessionPropertyProvider(queryRunner);
-        return queryRunner;
-    }
-
-    @Override
-    protected QueryRunner createExpectedQueryRunner() throws Exception
-    {
-        return PrestoNativeQueryRunnerUtils.createJavaQueryRunner();
-    }
-
     @Test
     public void testShowFunctions()
+            throws IOException, InterruptedException
     {
         String sql = "SHOW FUNCTIONS";
-        MaterializedResult actualResult = computeActual(sql);
-        List<MaterializedRow> actualRows = actualResult.getMaterializedRows();
-        List<MaterializedRow> filteredRows = specialFunctionsToExcludeFilter(actualRows);
-        assertTrue(filteredRows.size() >= FUNCTION_COUNT);
-        filteredRows.forEach(row -> {
-            // Iterate over all cells in the row
-            for (Object cellValue : row.getFields()) {
-                if (Pattern.matches(REGEX_FUNCTION_NAMESPACE, cellValue.toString())) {
-                    return;
-                }
-            }
-            fail(format("no namespace match found for row: %s", row));
-        });
-    }
-    private List<MaterializedRow> specialFunctionsToExcludeFilter(List<MaterializedRow> inputRows)
-    {
-        return inputRows.stream()
-                .filter(row -> !row.getFields().contains("is_null") &&
-                        !row.getFields().contains("in"))
-                .collect(toImmutableList());
+        Container.ExecResult actualResult = executeQuery(sql);
+        assertTrue(actualResult.getStdout().contains("dynamic_123"), "dynamic function was not loaded");
     }
 }

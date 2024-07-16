@@ -75,7 +75,7 @@ public class TestPrestoContainerBasicQueries
         worker.stop();
     }
 
-    private Container.ExecResult executeQuery(String sql)
+    protected Container.ExecResult executeQuery(String sql)
             throws IOException, InterruptedException
     {
         // Command to run inside the coordinator container using the presto-cli.
