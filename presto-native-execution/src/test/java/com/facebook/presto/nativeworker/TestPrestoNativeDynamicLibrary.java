@@ -13,39 +13,98 @@
  */
 package com.facebook.presto.nativeworker;
 
-import com.facebook.presto.testing.MaterializedResult;
-import com.facebook.presto.testing.MaterializedRow;
-import com.facebook.presto.testing.QueryRunner;
-import com.facebook.presto.tests.AbstractTestQueryFramework;
-import com.facebook.presto.tests.DistributedQueryRunner;
-import org.intellij.lang.annotations.Language;
+import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.Container;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.Network;
+import org.testcontainers.containers.wait.strategy.Wait;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
+import java.time.Duration;
+import java.util.concurrent.TimeUnit;
 
-import static com.facebook.presto.nativeworker.NativeQueryRunnerUtils.createLineitem;
-import static com.facebook.presto.nativeworker.NativeQueryRunnerUtils.createOrders;
-import static com.facebook.presto.nativeworker.PrestoNativeQueryRunnerUtils.setupNativeFunctionNamespaceManager;
-import static com.facebook.presto.nativeworker.PrestoNativeQueryRunnerUtils.setupSessionPropertyProvider;
-import static com.google.common.collect.ImmutableList.toImmutableList;
-import static java.lang.String.format;
-import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
+
 @Test(singleThreaded = true)
 public class TestPrestoNativeDynamicLibrary
-        extends TestPrestoContainerBasicQueries
 {
+    private static final String PRESTO_COORDINATOR_IMAGE = System.getProperty("coordinatorImage", "presto-coordinator:latest");
+    private static final String PRESTO_WORKER_IMAGE = System.getProperty("workerImage", "presto-worker:latest");
+    private static final String BASE_DIR = System.getProperty("user.dir");
+    private static final String CONTAINER_TIMEOUT = System.getProperty("containerTimeout", "120");
+    private static final Network network = Network.newNetwork();
+    private GenericContainer<?> coordinator;
+    private GenericContainer<?> worker;
+    @BeforeClass
+    public void setup()
+            throws InterruptedException
+    {
+        // TODO: This framework is tested only in Ubuntu x86_64, as there is no support to run the native docker images in ARM based system,
+        // Once this is fixed, the container details can be added as properties in VM options for testing in IntelliJ.
+        coordinator = new GenericContainer<>(PRESTO_COORDINATOR_IMAGE)
+                .withExposedPorts(8081)
+                .withNetwork(network).withNetworkAliases("presto-coordinator")
+                .withFileSystemBind(BASE_DIR + "/testcontainers/coordinator/etc", "/opt/presto-server/etc", BindMode.READ_WRITE)
+                .withFileSystemBind(BASE_DIR + "/testcontainers/coordinator/entrypoint.sh", "/opt/entrypoint.sh", BindMode.READ_ONLY)
+                .waitingFor(Wait.forLogMessage(".*======== SERVER STARTED ========.*", 1))
+                .withStartupTimeout(Duration.ofSeconds(Long.parseLong(CONTAINER_TIMEOUT)));
+
+        worker = new GenericContainer<>(PRESTO_WORKER_IMAGE)
+                .withExposedPorts(7777)
+                .withNetwork(network).withNetworkAliases("presto-worker")
+                .withFileSystemBind(BASE_DIR + "/testcontainers/nativeworker/velox-etc", "/opt/presto-server/etc", BindMode.READ_ONLY)
+                .withFileSystemBind(BASE_DIR + "/testcontainers/nativeworker/entrypoint.sh", "/opt/entrypoint.sh", BindMode.READ_ONLY)
+                .withFileSystemBind(BASE_DIR + "/testcontainers/plugin/libpresto_function_my_dynamic.dylib", "/opt/plugin/libpresto_function_my_dynamic.dylib", BindMode.READ_ONLY)
+                .waitingFor(Wait.forLogMessage(".*Announcement succeeded: HTTP 202.*", 1));
+
+        coordinator.start();
+        worker.start();
+
+        // Wait for worker to announce itself.
+        TimeUnit.SECONDS.sleep(5);
+    }
+    @AfterClass
+    public void tearDown()
+                throws InterruptedException
+    {
+        TimeUnit.SECONDS.sleep(60);
+        coordinator.stop();
+        worker.stop();
+    }
+    protected Container.ExecResult executeQuery(String sql)
+            throws IOException, InterruptedException
+    {
+        // Command to run inside the coordinator container using the presto-cli.
+        String[] command = {
+                "/opt/presto-cli",
+                "--server",
+                "presto-coordinator:8081",
+                "--catalog",
+                "tpch",
+                "--schema",
+                "tiny",
+                "--execute",
+                sql
+        };
+
+        Container.ExecResult execResult = coordinator.execInContainer(command);
+        if (execResult.getExitCode() != 0) {
+            String errorDetails = "Stdout: " + execResult.getStdout() + "\nStderr: " + execResult.getStderr();
+            fail("Presto CLI exited with error code: " + execResult.getExitCode() + "\n" + errorDetails);
+        }
+        return execResult;
+    }
     @Test
     public void testShowFunctions()
             throws IOException, InterruptedException
     {
         String sql = "SHOW FUNCTIONS";
         Container.ExecResult actualResult = executeQuery(sql);
+        System.out.println(actualResult.toString());
         assertTrue(actualResult.getStdout().contains("dynamic_123"), "dynamic function was not loaded");
     }
 }

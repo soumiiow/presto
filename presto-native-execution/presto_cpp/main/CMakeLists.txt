@@ -74,7 +74,8 @@ target_link_libraries(
   ${FOLLY_WITH_DEPENDENCIES}
   ${GLOG}
   ${GFLAGS_LIBRARIES}
-  pthread)
+  pthread
+  presto_dynamic_function_loader)
 
 # Enabling Parquet causes build errors with missing symbols on MacOS. This is
 # likely due to a conflict between Arrow Thrift from velox_hive_connector and
