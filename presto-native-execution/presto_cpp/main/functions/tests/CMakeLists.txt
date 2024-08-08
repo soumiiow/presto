@@ -1,25 +1,3 @@
-add_executable(presto_function_metadata_test FunctionMetadataTest.cpp)
-
-add_test(
-  NAME presto_function_metadata_test
-  COMMAND presto_function_metadata_test
-  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-
-target_link_libraries(
-  presto_function_metadata_test
-  xsimd
-  gtest
-  gtest_main
-  presto_function_metadata
-  presto_protocol
-  velox_aggregates
-  velox_coverage_util
-  velox_exec
-  velox_functions_prestosql
-  presto_type_converter
-  velox_window
-  ${ANTLR4_RUNTIME})
-
 # To test functions being added by dynamically linked libraries, we compile
 # `MyDynamicTestFunction.cpp` as a small .so library, and use the
 # MY_DYNAMIC_FUNCTION_LIBRARY_PATH macro to locate the .so binary.

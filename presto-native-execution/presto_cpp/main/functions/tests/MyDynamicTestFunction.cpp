@@ -44,16 +44,23 @@ void registry() {
       int64_t>({"dynamic_123"});
 }
 }
-//need some kind of library to be able to get rid of registry dependency. make an abstraction somehow. get that linked dynamically into rpesto server and my library i built
-//dlopen will always be dynamic and these dependencies will always be static
-//need something that resolves later. maybe research how to abstract in such a way that you do not need to include all these internals. how does it map to the symbol
-//problems when we load the same symbol from two sides. how would i rewrite or abstract this away that provides all we need. have this abstraction layer be dynamically linked to velox library.
-//codegen happens at build time.
-//udf api is only built for statically linking. not changed to dynamically linking. @jacob -- hes the assigned user in oss
-// in a shared library, the extern flag + name of the thing. if gflags is a dll, define GFLAGS_DLL_DECLARE_FLAG __declspec(dllimport)
-// GFLAGS_IS_A_DLL -> we would have to build gflags as a dll. looks to be that gflags is statically linked -DGFLAGS_IS_A_DLL=0
-//cmake option verbose to see each command. see what it resolves to
+// need some kind of library to be able to get rid of registry dependency. make
+// an abstraction somehow. get that linked dynamically into rpesto server and my
+// library i built dlopen will always be dynamic and these dependencies will
+// always be static need something that resolves later. maybe research how to
+// abstract in such a way that you do not need to include all these internals.
+// how does it map to the symbol problems when we load the same symbol from two
+// sides. how would i rewrite or abstract this away that provides all we need.
+// have this abstraction layer be dynamically linked to velox library. codegen
+// happens at build time. udf api is only built for statically linking. not
+// changed to dynamically linking. @jacob -- hes the assigned user in oss
+//  in a shared library, the extern flag + name of the thing. if gflags is a
+//  dll, define GFLAGS_DLL_DECLARE_FLAG __declspec(dllimport) GFLAGS_IS_A_DLL ->
+//  we would have to build gflags as a dll. looks to be that gflags is
+//  statically linked -DGFLAGS_IS_A_DLL=0
+// cmake option verbose to see each command. see what it resolves to
 
-//another issue is velox_memory_pool_mb something wrong with the dll thing. not intended to be dynamically linked. interestinggggg.
+// another issue is velox_memory_pool_mb something wrong with the dll thing. not
+// intended to be dynamically linked. interestinggggg.
 
 // 1. get the fyre machine. 2. get code in there and run 3. work on e2e
