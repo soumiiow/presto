@@ -1,8 +1,5 @@
-
-add_library(presto_function_metadata OBJECT FunctionMetadata.cpp)
 add_library(presto_dynamic_function_loader OBJECT DynamicLibraryLoader.cpp)
 
-target_link_libraries(presto_function_metadata velox_function_registry)
 if(PRESTO_ENABLE_TESTING)
   add_subdirectory(tests)
 endif()

@@ -18,9 +18,9 @@
 #include <gtest/gtest.h>
 
 #include "presto_cpp/main/functions/DynamicLibraryLoader.h"
+#include "velox/common/base/Exceptions.h"
 #include "velox/functions/FunctionRegistry.h"
 #include "velox/functions/prestosql/tests/utils/FunctionBaseTest.h"
-#include "velox/common/base/Exceptions.h"
 
 using namespace facebook::velox::functions::test;
 using namespace facebook::velox;
@@ -41,7 +41,9 @@ TEST_F(DynamicLinkTest, dynamicLoad) {
 
   // Dynamically load the library.
   std::string libraryPath = MY_DYNAMIC_FUNCTION_LIBRARY_PATH;
-  libraryPath += "/libpresto_function_my_dynamic.dylib"; //building on MacOS leads to .dylib file not .so file
+  libraryPath +=
+      "/libpresto_function_my_dynamic.dylib"; // building on MacOS leads to
+                                              // .dylib file not .so file
 
   loadDynamicLibraryFunctions(libraryPath.data());
 

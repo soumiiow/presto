@@ -26,7 +26,6 @@
 #include "presto_cpp/main/common/ConfigReader.h"
 #include "presto_cpp/main/common/Counters.h"
 #include "presto_cpp/main/common/Utils.h"
-#include "presto_cpp/main/functions/FunctionMetadata.h"
 #include "presto_cpp/main/http/filters/AccessLogFilter.h"
 #include "presto_cpp/main/http/filters/HttpEndpointLatencyFilter.h"
 #include "presto_cpp/main/http/filters/InternalAuthenticationFilter.h"
@@ -54,6 +53,8 @@
 #include "velox/functions/prestosql/registration/RegistrationFunctions.h"
 #include "velox/functions/prestosql/window/WindowFunctionsRegistration.h"
 #include "velox/serializers/PrestoSerializer.h"
+#include "presto_cpp/main/functions/DynamicLibraryLoader.h"
+#include <iostream>
 
 #ifdef PRESTO_ENABLE_REMOTE_FUNCTIONS
 #include "presto_cpp/main/functions/RemoteFunctionRegisterer.h"
@@ -396,6 +397,7 @@ void PrestoServer::run() {
   registerRemoteFunctions();
   registerVectorSerdes();
   registerPrestoPlanNodeSerDe();
+  registerDynamicFunctions();
 
   const auto numExchangeHttpClientIoThreads = std::max<size_t>(
       systemConfig->exchangeHttpClientNumIoThreadsHwMultiplier() *
@@ -1344,6 +1346,23 @@ protocol::NodeStatus PrestoServer::fetchNodeStatus() {
       nonHeapUsed};
 
   return nodeStatus;
+}
+void PrestoServer::registerDynamicFunctions() {
+  auto systemConfig = SystemConfig::instance();
+  if (systemConfig->pluginDir().empty()) {
+      //if it's a valid directory, traverse and call dynamic function loader on it
+    const fs::path path(systemConfig->pluginDir()); 
+    std::error_code ec; // For using the non-throwing overloads of functions below.
+    if (fs::is_directory(path, ec)){
+      using recursive_directory_iterator = std::filesystem::recursive_directory_iterator;
+      for (const auto& dirEntry : recursive_directory_iterator(path)){
+        if(!fs::is_directory(dirEntry, ec)){
+          loadDynamicLibraryFunctions(dirEntry.path().c_str());
+          std::cout<<"LOADED DYLLIB 2"<<std::endl;
+        }
+      }
+    }
+    }
 }
 
 } // namespace facebook::presto

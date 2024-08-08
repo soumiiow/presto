@@ -228,6 +228,7 @@ SystemConfig::SystemConfig() {
           STR_PROP(kCacheVeloxTtlThreshold, "2d"),
           STR_PROP(kCacheVeloxTtlCheckInterval, "1h"),
           BOOL_PROP(kEnableRuntimeMetricsCollection, false),
+          STR_PROP(kPluginDir, ""),
       };
 }
 
@@ -681,6 +682,10 @@ int32_t SystemConfig::largestSizeClassPages() const {
 
 bool SystemConfig::enableRuntimeMetricsCollection() const {
   return optionalProperty<bool>(kEnableRuntimeMetricsCollection).value();
+}
+
+std::string SystemConfig::pluginDir() const {
+  return optionalProperty(kPluginDir).value();
 }
 
 NodeConfig::NodeConfig() {

@@ -17,6 +17,7 @@
 #include "presto_cpp/main/functions/DynamicLibraryLoader.h"
 #include <dlfcn.h>
 #include "velox/common/base/Exceptions.h"
+#include <iostream>
 namespace facebook::presto {
 
 static constexpr const char* kSymbolName = "registry";
@@ -38,6 +39,7 @@ void loadDynamicLibraryFunctions(const char* fileName) {
     VELOX_USER_FAIL("Couldn't find Velox registry symbol: {}", error);
   }
   registryFunction();
+  std::cout<<"LOADED DYLLIB 1"<<std::endl;
 }
 
 } // namespace facebook::presto

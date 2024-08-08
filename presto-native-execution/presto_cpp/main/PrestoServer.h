@@ -172,6 +172,8 @@ class PrestoServer {
   /// Invoked to enable stats reporting and register counters.
   virtual void enableWorkerStatsReporting();
 
+  virtual void registerDynamicFunctions();
+
   /// Invoked to get the list of filters passed to the http server.
   std::vector<std::unique_ptr<proxygen::RequestHandlerFactory>>
   getHttpServerFilters();
