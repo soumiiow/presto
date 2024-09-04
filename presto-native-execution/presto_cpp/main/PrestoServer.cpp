@@ -25,7 +25,6 @@
 #include "presto_cpp/main/common/ConfigReader.h"
 #include "presto_cpp/main/common/Counters.h"
 #include "presto_cpp/main/common/Utils.h"
-#include "presto_cpp/main/functions/FunctionMetadata.h"
 #include "presto_cpp/main/http/filters/AccessLogFilter.h"
 #include "presto_cpp/main/http/filters/HttpEndpointLatencyFilter.h"
 #include "presto_cpp/main/http/filters/InternalAuthenticationFilter.h"
@@ -406,6 +405,7 @@ void PrestoServer::run() {
   registerRemoteFunctions();
   registerVectorSerdes();
   registerPrestoPlanNodeSerDe();
+  PRESTO_STARTUP_LOG(INFO) << "heeere 1111!!!";
   registerDynamicFunctions();
 
   const auto numExchangeHttpClientIoThreads = std::max<size_t>(
@@ -1450,9 +1450,11 @@ protocol::NodeStatus PrestoServer::fetchNodeStatus() {
 }
 void PrestoServer::registerDynamicFunctions() {
   auto systemConfig = SystemConfig::instance();
-  if (systemConfig->pluginDir().empty()) {
+  PRESTO_STARTUP_LOG(INFO) << "heeere!!!";
+  if (!systemConfig->pluginDir().empty()) {
       //if it's a valid directory, traverse and call dynamic function loader on it
     const fs::path path(systemConfig->pluginDir()); 
+    PRESTO_STARTUP_LOG(INFO) << path;
     std::error_code ec; // For using the non-throwing overloads of functions below.
     if (fs::is_directory(path, ec)){
       using recursive_directory_iterator = std::filesystem::recursive_directory_iterator;
@@ -1460,6 +1462,7 @@ void PrestoServer::registerDynamicFunctions() {
         if(!fs::is_directory(dirEntry, ec)){
           loadDynamicLibraryFunctions(dirEntry.path().c_str());
           std::cout<<"LOADED DYLLIB 2"<<std::endl;
+          PRESTO_STARTUP_LOG(INFO) << "LOADED DYLLIB 2";
         }
       }
     }
