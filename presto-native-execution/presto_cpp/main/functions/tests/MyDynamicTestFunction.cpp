@@ -12,8 +12,8 @@
  * limitations under the License.
  */
 
-#include "velox/functions/Udf.h"
 #include "velox/expression/SimpleFunctionRegistry.h"
+#include "velox/functions/Udf.h"
 using namespace facebook::velox::exec;
 extern "C" bool registry();
 extern "C" const SimpleFunctionRegistry* simpleFunctionsInDylibGetInstance() {
@@ -43,4 +43,3 @@ bool registry() {
       facebook::presto::functions::Dynamic123Function,
       int64_t>({"dynamic_123"});
 }
-

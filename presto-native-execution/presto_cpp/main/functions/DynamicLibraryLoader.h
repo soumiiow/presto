@@ -33,4 +33,3 @@ namespace facebook::presto {
 bool loadDynamicLibraryFunctions(const char* fileName);
 
 } // namespace facebook::presto
-
