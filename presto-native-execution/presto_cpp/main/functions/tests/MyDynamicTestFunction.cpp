@@ -14,6 +14,11 @@
 
 #include "velox/functions/Udf.h"
 #include "velox/expression/SimpleFunctionRegistry.h"
+using namespace facebook::velox::exec;
+extern "C" bool registry();
+extern "C" const SimpleFunctionRegistry* simpleFunctionsInDylibGetInstance() {
+  return simpleFunctionsPtr();
+}
 
 // This file defines a mock function that will be dynamically linked and
 // registered. There are no restrictions as to how the function needs to be
@@ -33,15 +38,9 @@ struct Dynamic123Function {
 };
 __attribute__((visibility("default"))) void registry();
 } // namespace facebook::presto::functions
-extern "C" bool registry() {
+bool registry() {
   return facebook::velox::registerFunction<
       facebook::presto::functions::Dynamic123Function,
       int64_t>({"dynamic_123"});
 }
-extern "C" facebook::velox::exec::SimpleFunctionRegistry* simpleFunctionsInternalGetInstance() {
-  return &facebook::velox::exec::SimpleFunctionRegistry::simpleFunctionsInternal();
-}
-extern "C" bool registry();
-extern "C" facebook::velox::exec::SimpleFunctionRegistry* simpleFunctionsInternalGetInstance();
-
 

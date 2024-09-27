@@ -15,8 +15,7 @@
 add_compile_definitions(
   MY_DYNAMIC_FUNCTION_LIBRARY_PATH="${CMAKE_CURRENT_BINARY_DIR}")
 add_library(presto_function_my_dynamic SHARED MyDynamicTestFunction.cpp)
-target_link_libraries(presto_function_my_dynamic PRIVATE xsimd fmt::fmt 
-velox_shared_simple_functions velox_vector velox_core velox_common_base )  
+target_link_libraries(presto_function_my_dynamic PRIVATE velox_function_registry)  
 # loads with velox_expression but not with velox_shared_simple_functions
 
 # Here's the actual test which will dynamically load the library defined above.
@@ -29,7 +28,6 @@ target_link_libraries(
   presto_function_dynamic_link_test
   velox_functions_test_lib
   presto_dynamic_function_loader
-  velox_function_registry
   xsimd
   gmock
   ${GTEST_BOTH_LIBRARIES})

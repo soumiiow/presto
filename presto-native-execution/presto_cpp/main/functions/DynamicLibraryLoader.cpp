@@ -22,16 +22,16 @@ namespace facebook::presto {
 static constexpr const char* kSymbolName = "registry";
 
 bool loadDynamicLibraryFunctions(const char* fileName) {
-  auto& simpleFunctions = velox::exec::simpleFunctions();
+  auto& simpleFunctions = velox::exec::mutableSimpleFunctions();
   // Try to dynamically load the shared library.
   void* handler = dlopen(fileName, RTLD_NOW);
 
   if (handler == nullptr) {
     VELOX_USER_FAIL("Error while loading shared library: {}", dlerror());
   }
-  using simpleFunctionsInternal = velox::exec::SimpleFunctionRegistry* (*)();
-   simpleFunctionsInternal simpleFunctionsInternalInLoader = (simpleFunctionsInternal) dlsym(handler, "simpleFunctionsInternalGetInstance");
-  velox::exec::SimpleFunctionRegistry* sharedsimpleFunctionsInternal = simpleFunctionsInternalInLoader();
+  using simpleFunctionsInDylib = velox::exec::SimpleFunctionRegistry* (*)();
+  simpleFunctionsInDylib simpleFunctionsInDylibLoader = (simpleFunctionsInDylib) dlsym(handler, "simpleFunctionsInDylibGetInstance");
+  velox::exec::SimpleFunctionRegistry* sharedsimpleFunctionsInDylib = simpleFunctionsInDylibLoader();
    // Lookup the symbol.
   void* registrySymbol = dlsym(handler, kSymbolName);
   auto registryFunction = reinterpret_cast<bool (*)()>(registrySymbol);
@@ -41,7 +41,9 @@ bool loadDynamicLibraryFunctions(const char* fileName) {
     VELOX_USER_FAIL("Couldn't find Velox registry symbol: {}", error);
   }
   dlclose(handler);
-  return registryFunction();
+  registryFunction();
+  simpleFunctions.appendSimpleFunctionRegistry(sharedsimpleFunctionsInDylib);
+  return true;
 }
 
 } // namespace facebook::presto
