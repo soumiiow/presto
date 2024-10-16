@@ -42,7 +42,7 @@ TEST_F(DynamicLinkTest, dynamicLoad) {
   // Dynamically load the library.
   std::string libraryPath = MY_DYNAMIC_FUNCTION_LIBRARY_PATH;
   libraryPath +=
-      "/libpresto_function_my_dynamic.dylib"; // building on MacOS leads to
+      "/libpresto_function_my_dynamic.so"; // building on MacOS leads to
                                               // .dylib file not .so file
 
   loadDynamicLibraryFunctions(libraryPath.data());
