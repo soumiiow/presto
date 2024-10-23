@@ -15,7 +15,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include "presto_cpp/main/functions/DynamicLibraryLoader.h"
+#include "velox/functions/DynamicLibraryLoader.h"
 #include "velox/common/base/Exceptions.h"
 #include "velox/functions/FunctionRegistry.h"
 #include "velox/functions/prestosql/tests/utils/FunctionBaseTest.h"
