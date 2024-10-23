@@ -4,12 +4,14 @@
 add_compile_definitions(
   MY_DYNAMIC_FUNCTION_LIBRARY_PATH="${CMAKE_CURRENT_BINARY_DIR}")
 add_library(presto_function_my_dynamic SHARED MyDynamicTestFunction.cpp)
+
 # target_link_libraries(presto_function_my_dynamic)
 target_link_libraries(presto_function_my_dynamic PRIVATE xsimd fmt)
-                     # looks like these are unnecessary for compiling velox_vector velox_core velox_exec)#velox_expression)
 
 # Here's the actual test which will dynamically load the library defined above.
 add_executable(presto_function_dynamic_link_test DynamicLinkTest.cpp)
+
+target_link_options(presto_function_dynamic_link_test BEFORE PUBLIC "-Wl,-export-dynamic")
 
 add_test(NAME presto_function_dynamic_link_test
          COMMAND presto_function_dynamic_link_test)
