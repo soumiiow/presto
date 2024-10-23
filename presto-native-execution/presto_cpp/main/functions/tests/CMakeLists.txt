@@ -31,10 +31,6 @@ target_link_libraries(
   presto_function_dynamic_link_test velox_functions_test_lib
   presto_dynamic_function_loader xsimd gmock ${GTEST_BOTH_LIBRARIES})
 
-# these are the testing flags all in a dynamic library
-add_library(presto_flags SHARED FlagLibrary.cpp)
-target_link_libraries(presto_flags gflags::gflags)
-
 set_target_properties(
   presto_function_my_dynamic PROPERTIES CXX_VISIBILITY_PRESET default
                                         VISIBILITY_INLINES_HIDDEN YES)
