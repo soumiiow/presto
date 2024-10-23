@@ -1,5 +1,3 @@
-add_library(presto_dynamic_function_loader OBJECT DynamicLibraryLoader.cpp)
-
 if(PRESTO_ENABLE_TESTING)
   add_subdirectory(tests)
 endif()
