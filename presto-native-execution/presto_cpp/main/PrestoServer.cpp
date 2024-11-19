@@ -27,6 +27,7 @@
 #include "presto_cpp/main/common/Counters.h"
 #include "presto_cpp/main/common/Utils.h"
 #include "presto_cpp/main/http/HttpConstants.h"
+#include "velox/common/dynamic_registry/DynamicLibraryLoader.h"
 #include "presto_cpp/main/http/filters/AccessLogFilter.h"
 #include "presto_cpp/main/http/filters/HttpEndpointLatencyFilter.h"
 #include "presto_cpp/main/http/filters/InternalAuthenticationFilter.h"
@@ -391,6 +392,7 @@ void PrestoServer::run() {
   registerRemoteFunctions();
   registerVectorSerdes();
   registerPrestoPlanNodeSerDe();
+  registerDynamicFunctions();
 
   const auto numExchangeHttpClientIoThreads = std::max<size_t>(
       systemConfig->exchangeHttpClientNumIoThreadsHwMultiplier() *
@@ -1567,6 +1569,24 @@ protocol::NodeStatus PrestoServer::fetchNodeStatus() {
       nonHeapUsed};
 
   return nodeStatus;
+}
+void PrestoServer::registerDynamicFunctions() {
+  auto systemConfig = SystemConfig::instance();
+  if (!systemConfig->pluginDir().empty()) {
+    // if it is a valid directory, traverse and call dynamic function loader
+    const fs::path path(systemConfig->pluginDir());
+    PRESTO_STARTUP_LOG(INFO) << path;
+    std::error_code ec; // For using the non-throwing overloads of functions below.
+    if (fs::is_directory(path, ec)) {
+      using recursive_directory_iterator =
+          std::filesystem::recursive_directory_iterator;
+      for (const auto& dirEntry : recursive_directory_iterator(path)) {
+        if (!fs::is_directory(dirEntry, ec)) {
+          loadDynamicLibrary(dirEntry.path().c_str());
+        }
+      }
+    }
+  }
 }
 
 } // namespace facebook::presto

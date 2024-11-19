@@ -80,6 +80,8 @@ public class ContainerQueryRunnerUtils
         properties.setProperty("discovery.uri", "http://presto-coordinator:" + coordinatorPort);
         properties.setProperty("system-memory-gb", "2");
         properties.setProperty("native.sidecar", "false");
+        properties.setProperty("plugin.dir", "plugin");
+        //plugin.dir=/Users/soumyaduriseti/Documents/presto_oss_dev/presto/presto-native-execution/testcontainers/plugin
         createPropertiesFile("testcontainers/" + nodeId + "/etc/config.properties", properties);
     }
 
@@ -93,6 +95,7 @@ public class ContainerQueryRunnerUtils
         properties.setProperty("http-server.http.port", Integer.toString(port));
         properties.setProperty("discovery-server.enabled", "true");
         properties.setProperty("discovery.uri", "http://presto-coordinator:" + port);
+        properties.setProperty("plugin.dir", "plugin");
 
         // Get native worker system properties and add them to the coordinator properties
         Map<String, String> nativeWorkerProperties = NativeQueryRunnerUtils.getNativeWorkerSystemProperties();
