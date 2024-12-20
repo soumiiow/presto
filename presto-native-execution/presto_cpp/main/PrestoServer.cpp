@@ -1582,7 +1582,7 @@ void PrestoServer::registerDynamicFunctions() {
           std::filesystem::recursive_directory_iterator;
       for (const auto& dirEntry : recursive_directory_iterator(path)) {
         if (!fs::is_directory(dirEntry, ec)) {
-          loadDynamicLibrary(dirEntry.path().c_str());
+          facebook::velox::loadDynamicLibrary(dirEntry.path().c_str());
         }
       }
     }
