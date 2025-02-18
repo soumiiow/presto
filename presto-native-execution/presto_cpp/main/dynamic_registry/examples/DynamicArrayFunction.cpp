@@ -27,7 +27,7 @@
 namespace facebook::velox::common::dynamicRegistry {
 
 template <typename T>
-struct Dynamic123Function {
+struct DynamicFunction {
   VELOX_DEFINE_FUNCTION_TYPES(T);
   FOLLY_ALWAYS_INLINE bool call(
       int64_t& result,
@@ -41,8 +41,8 @@ struct Dynamic123Function {
 extern "C" {
 void registry() {
   facebook::presto::registerPrestoFunction<
-      facebook::velox::common::dynamicRegistry::Dynamic123Function,
+      facebook::velox::common::dynamicRegistry::DynamicFunction,
       int64_t,
-      facebook::velox::Array<int64_t>>({"dynamic_1"});
+      facebook::velox::Array<int64_t>>("dynamic_array");
 }
 }

@@ -22,3 +22,12 @@ target_link_libraries(velox_varchar_function_my_dynamic
                       PRIVATE ${CMAKE_DYLIB_TEST_LINK_LIBRARIES})
 target_link_libraries(velox_array_function_my_dynamic
                       PRIVATE ${CMAKE_DYLIB_TEST_LINK_LIBRARIES})
+if(APPLE)
+  set(COMMON_LIBRARY_LINK_OPTIONS "-Wl,-undefined,dynamic_lookup")
+else()
+  set(COMMON_LIBRARY_LINK_OPTIONS "-Wl,--exclude-libs,ALL")
+endif()
+
+target_link_options(velox_function_my_dynamic PRIVATE ${COMMON_LIBRARY_LINK_OPTIONS})
+target_link_options(velox_varchar_function_my_dynamic PRIVATE ${COMMON_LIBRARY_LINK_OPTIONS})
+target_link_options(velox_array_function_my_dynamic PRIVATE ${COMMON_LIBRARY_LINK_OPTIONS})
