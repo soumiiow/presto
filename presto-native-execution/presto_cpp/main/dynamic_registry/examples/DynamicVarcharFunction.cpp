@@ -25,7 +25,7 @@
 namespace facebook::velox::common::dynamicRegistry {
 
 template <typename T>
-struct Dynamic123Function {
+struct DynamicFunction {
   VELOX_DEFINE_FUNCTION_TYPES(T);
   FOLLY_ALWAYS_INLINE bool call(out_type<Varchar>& result) {
     result = "123";
@@ -39,7 +39,7 @@ extern "C" {
 
 void registry() {
   facebook::presto::registerPrestoFunction<
-      facebook::velox::common::dynamicRegistry::Dynamic123Function,
-      facebook::velox::Varchar>({"dynamic_3"});
+      facebook::velox::common::dynamicRegistry::DynamicFunction,
+      facebook::velox::Varchar>("dynamic_varchar");
 }
 }
