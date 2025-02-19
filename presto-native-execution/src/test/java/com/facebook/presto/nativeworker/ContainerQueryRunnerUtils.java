@@ -82,6 +82,7 @@ public class ContainerQueryRunnerUtils
         properties.setProperty("discovery.uri", "http://presto-coordinator:" + coordinatorPort);
         properties.setProperty("system-memory-gb", "2");
         properties.setProperty("native.sidecar", "false");
+        properties.setProperty("plugin.dir", "opt/plugin");
         createPropertiesFile("testcontainers/" + nodeId + "/etc/config.properties", properties);
     }
 
