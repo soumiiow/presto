@@ -21,7 +21,7 @@ podman machine init --cpus 12 --memory 18000 --disk-size 160
 ```
 Run the following commands to make Podman as the default Docker service and start it.
 ```
-sudo /opt/homebrew/Cellar/podman/5.0.3/bin/podman-mac-helper install
+sudo $(brew --prefix podman)/bin/podman-mac-helper install
 podman machine start
 ```
 
