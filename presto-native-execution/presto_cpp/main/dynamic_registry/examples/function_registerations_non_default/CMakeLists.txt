@@ -11,7 +11,7 @@
 # limitations under the License.
 
 add_library(presto_non_defualt_function_my_dynamic SHARED
-            MyDynamicNonDefaultFunction.cpp)
+            DynamicNonDefaultFunction.cpp)
 
 set(CMAKE_DYLIB_TEST_LINK_LIBRARIES fmt::fmt gflags::gflags xsimd)
 target_link_libraries(presto_non_defualt_function_my_dynamic

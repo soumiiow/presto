@@ -10,10 +10,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_library(presto_function_my_dynamic SHARED MyDynamicFunction.cpp)
+add_library(presto_function_my_dynamic SHARED DynamicFunction.cpp)
 add_library(presto_varchar_function_my_dynamic SHARED
-            MyDynamicVarcharFunction.cpp)
-add_library(presto_array_function_my_dynamic SHARED MyDynamicArrayFunction.cpp)
+            DynamicVarcharFunction.cpp)
+add_library(presto_array_function_my_dynamic SHARED DynamicArrayFunction.cpp)
 
 set(CMAKE_DYLIB_TEST_LINK_LIBRARIES fmt::fmt gflags::gflags xsimd)
 target_link_libraries(presto_function_my_dynamic

@@ -11,7 +11,7 @@
 # limitations under the License.
 add_subdirectory(examples)
 
-add_library(presto_dynamic_config_reg_lib DynamicFunctionConfigRegisterer.cpp)
+add_library(presto_dynamic_config_reg_lib DynamicLibraryLoader.cpp)
 target_link_libraries(presto_dynamic_config_reg_lib xsimd)
 
 if(APPLE)

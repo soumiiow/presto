@@ -47,21 +47,26 @@ namespace facebook::presto {
 /// Or
 
 ///  {
-///  "dynamicLibrariesUdfMap": {
-///    "sub_dir_name": {
-///      "my_function": [
-///        {
-///          "outputType": "integer",
-///         "entrypoint": "nameOfRegistryFnCall",
-///          "fileName": "nameOfFile",
-///          "paramTypes": [
-///            "integer"
-///         ],
-///          "nameSpace": "presto.default",
-///          "routineCharacteristics": {
-///            ...
-///          }
-///        }
+///   "dynamicLibrariesUdfMap": {
+///     "sub_dir_name": {
+///       "my_function": [
+///         {
+///           "outputType": "integer",
+///           "entrypoint": "nameOfRegistryFnCall",
+///           "fileName": "nameOfFile",
+///           "paramTypes": [
+///             "integer"
+///           ],
+///           "nameSpace": "presto.default",
+///           "routineCharacteristics": {
+///             ...
+///           }
+///         },
+///       ]
+///     }  
+///    }
+///  }
+
 /// TODO: This json definition only supports scalar signatures for now. It also
 /// does not support variadic arguments, type variables, or constant arguments
 /// yet.

@@ -23,7 +23,10 @@
 
 namespace facebook::presto {
 
-class DynamicLibraryValidator {
+using fnSignaturePtrMap = std::
+unordered_map<std::string, std::vector<velox::exec::FunctionSignaturePtr>>;
+
+class DynamicLibraryLoader {
  private:
   // To group possible functions with the same name but different
   // signatures.
@@ -41,7 +44,7 @@ class DynamicLibraryValidator {
       const std::string& pluginDir);
 
  public:
-  DynamicLibraryValidator(
+  DynamicLibraryLoader(
       const fs::path& filePath,
       const std::string& pluginDir) {
     processConfigFile(filePath, pluginDir);
@@ -51,14 +54,13 @@ class DynamicLibraryValidator {
   int64_t compareConfigWithRegisteredFunctionSignatures(
       facebook::velox::FunctionSignatureMap fnSignaturesBefore);
 
-  std::
-      unordered_map<std::string, std::vector<velox::exec::FunctionSignaturePtr>>
-      getFunctionMap() const {
+  fnSignaturePtrMap getFunctionMap() const {
     return *(functionMap_.rlock());
   }
 
   std::unordered_map<std::string, std::string> getEntrypointMap() const {
     return *(entrypointMap_.rlock());
   }
+  int loadDynamicFunctions();
 };
 } // namespace facebook::presto

@@ -12,12 +12,13 @@
  * limitations under the License.
  */
 
-#include "presto_cpp/main/dynamic_registry/DynamicFunctionConfigRegisterer.h"
+#include "presto_cpp/main/dynamic_registry/DynamicLibraryLoader.h"
 #include <fstream>
 #include "presto_cpp/main/JsonSignatureParser.h"
 #include "presto_cpp/main/common/Configs.h"
 #include "velox/common/base/Exceptions.h"
 #include "velox/common/base/Fs.h"
+#include "velox/common/dynamic_registry/DynamicLibraryLoader.h"
 #include "velox/expression/SimpleFunctionRegistry.h"
 #include "velox/functions/FunctionRegistry.h"
 
@@ -79,7 +80,7 @@ bool isConfigSignatureRegistered(
 }
 } // namespace
 
-int64_t DynamicLibraryValidator::compareConfigWithRegisteredFunctionSignatures(
+int64_t DynamicLibraryLoader::compareConfigWithRegisteredFunctionSignatures(
     facebook::velox::FunctionSignatureMap fnSignaturesBefore) {
   int64_t missingConfigRegistrations = 0;
   auto lockedFunctionMap = *(functionMap_.wlock());
@@ -126,7 +127,7 @@ std::string prestoFunctionName(
   return name;
 }
 
-void DynamicLibraryValidator::processConfigFile(
+void DynamicLibraryLoader::processConfigFile(
     const fs::path& filePath,
     const std::string& pluginDir) {
   std::ifstream stream{filePath};
@@ -148,6 +149,27 @@ void DynamicLibraryValidator::processConfigFile(
       }
     }
   }
+}
+
+int DynamicLibraryLoader::loadDynamicFunctions() {
+  auto filenameAndEntrypointMap = *(entrypointMap_.rlock());
+  auto registeredFnSignaturesBefore = velox::getFunctionSignatures();
+  for (const auto& entryPointItr : filenameAndEntrypointMap) {
+    auto absoluteFilePath = entryPointItr.first;
+    auto entrypoint = entryPointItr.second;
+    // Only load dynamic library for signatures provided by the entrypoint
+    // in a particular config file
+    velox::loadDynamicLibrary(absoluteFilePath, entrypoint.c_str());
+  }
+  auto missedConfigRegisterations =
+      compareConfigWithRegisteredFunctionSignatures(
+          registeredFnSignaturesBefore);
+  if (missedConfigRegisterations > 0) {
+    LOG(ERROR) << "Config file has " << missedConfigRegisterations
+               << " extra signatures that were not registered";
+    return EXIT_FAILURE;
+  }
+  return EXIT_SUCCESS;
 }
 
 } // namespace facebook::presto

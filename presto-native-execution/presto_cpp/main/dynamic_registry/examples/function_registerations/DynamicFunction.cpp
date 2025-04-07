@@ -12,9 +12,6 @@
  * limitations under the License.
  */
 
-#include <signal.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include "presto_cpp/main/dynamic_registry/DynamicFunctionRegistrar.h"
 // This file defines a mock function that will be dynamically linked and
 // registered. There are no restrictions as to how the function needs to be

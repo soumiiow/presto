@@ -14,9 +14,8 @@
 
 #include <gtest/gtest.h>
 #include <fstream>
-#include "presto_cpp/main/dynamic_registry/DynamicFunctionConfigRegisterer.h"
+#include "presto_cpp/main/dynamic_registry/DynamicLibraryLoader.h"
 #include "presto_cpp/main/dynamic_registry/DynamicFunctionRegistrar.h"
-#include "presto_cpp/main/dynamic_registry/DynamicSignalHandler.h"
 #include "velox/common/base/Fs.h"
 #include "velox/exec/tests/utils/TempDirectoryPath.h"
 #include "velox/exec/tests/utils/TempFilePath.h"
@@ -74,6 +73,21 @@ class DynamicFunctionRegistererTest : public testing::Test {
     outputFile.close();
   }
 
+  void emulateConfigFile(std::string_view json, std::string pathStr) {
+    // auto path = exec::test::TempFilePath::create();
+    // auto pathStr = path->getPath();
+    std::filesystem::path fsPath(pathStr);
+    auto fileName = fsPath.filename().string();
+    std::ofstream{fsPath.parent_path() / "test.so"}.put('a');
+  
+    // Create dummy shared library to emulate the shared library path validation.
+    auto filePathForDummySharedFile = exec::test::TempFilePath::create();
+    std::filesystem::path sharedFilePath(filePathForDummySharedFile->getPath());
+    auto dummySharedFile = sharedFilePath.replace_extension(kFileExtension);
+  
+    writeToFile(pathStr, json);
+  }
+
  private:
   std::shared_ptr<SystemConfig> systemConfig;
 };
@@ -108,16 +122,20 @@ TEST_F(DynamicFunctionRegistererTest, twoFunctions) {
   // Emulate user provided config file.
   auto path = exec::test::TempFilePath::create();
   auto pathStr = path->getPath();
-  std::filesystem::path fsPath(pathStr);
-  auto fileName = fsPath.filename().string();
-  std::ofstream{fsPath.parent_path() / "test.so"}.put('a');
+  emulateConfigFile(json, pathStr);
 
-  // Create dummy shared library to emulate the shared library path validation.
-  auto filePathForDummySharedFile = exec::test::TempFilePath::create();
-  std::filesystem::path sharedFilePath(filePathForDummySharedFile->getPath());
-  auto dummySharedFile = sharedFilePath.replace_extension(kFileExtension);
+  // auto path = exec::test::TempFilePath::create();
+  // auto pathStr = path->getPath();
+  // std::filesystem::path fsPath(pathStr);
+  // auto fileName = fsPath.filename().string();
+  // std::ofstream{fsPath.parent_path() / "test.so"}.put('a');
 
-  writeToFile(pathStr, json);
+  // // Create dummy shared library to emulate the shared library path validation.
+  // auto filePathForDummySharedFile = exec::test::TempFilePath::create();
+  // std::filesystem::path sharedFilePath(filePathForDummySharedFile->getPath());
+  // auto dummySharedFile = sharedFilePath.replace_extension(kFileExtension);
+
+  // writeToFile(pathStr, json);
 
   // Check functions do not exist first.
   auto registeredFnSignaturesBefore = velox::getFunctionSignatures();
@@ -128,7 +146,7 @@ TEST_F(DynamicFunctionRegistererTest, twoFunctions) {
       registeredFnSignaturesBefore.find("presto.default.mock2") ==
       registeredFnSignaturesBefore.end());
 
-  DynamicLibraryValidator testDynamicLibraryValidator(path->getPath(), "/");
+  DynamicLibraryLoader testDynamicLibraryLoader(pathStr, "/");
 
   // Read and register functions in that file. Emulating the dynamic loading
   // process.
@@ -145,7 +163,7 @@ TEST_F(DynamicFunctionRegistererTest, twoFunctions) {
 
   // Config validations.
   EXPECT_EQ(
-      testDynamicLibraryValidator.compareConfigWithRegisteredFunctionSignatures(
+      testDynamicLibraryLoader.compareConfigWithRegisteredFunctionSignatures(
           registeredFnSignaturesBefore),
       0);
 }
@@ -171,18 +189,7 @@ TEST_F(DynamicFunctionRegistererTest, newNamespace) {
   // Emulate user provided config file.
   auto path = exec::test::TempFilePath::create();
   auto pathStr = path->getPath();
-  std::filesystem::path fsPath(pathStr);
-  auto fileName = fsPath.filename().string();
-  std::ofstream{fsPath.parent_path() / "test.so"}.put('a');
-
-  // Create dummy shared library to emulate the shared library path validation.
-  auto filePathForDummySharedFile = exec::test::TempFilePath::create();
-  std::filesystem::path sharedFilePath(filePathForDummySharedFile->getPath());
-  auto strDummySharedFile =
-      sharedFilePath.replace_extension(kFileExtension).string();
-
-  // Write to a single output file.
-  writeToFile(pathStr, json);
+  emulateConfigFile(json, pathStr);
 
   // Check functions do not exist first.
   auto registeredFnSignaturesBefore = velox::getFunctionSignatures();
@@ -190,7 +197,7 @@ TEST_F(DynamicFunctionRegistererTest, newNamespace) {
       registeredFnSignaturesBefore.find("test.namespace.mock3") ==
       registeredFnSignaturesBefore.end());
 
-  DynamicLibraryValidator testDynamicLibraryValidator(path->getPath(), "/");
+  DynamicLibraryLoader testDynamicLibraryLoader(pathStr, "/");
 
   // Read and register functions in that file. Emulating the dynamic loading
   // process
@@ -205,7 +212,7 @@ TEST_F(DynamicFunctionRegistererTest, newNamespace) {
   // A return value greater than 0 indicates discrepency between the
   // registerations and config.
   EXPECT_EQ(
-      testDynamicLibraryValidator.compareConfigWithRegisteredFunctionSignatures(
+      testDynamicLibraryLoader.compareConfigWithRegisteredFunctionSignatures(
           registeredFnSignaturesBefore),
       0);
 }

@@ -48,7 +48,6 @@ target_link_libraries(
   $<TARGET_OBJECTS:presto_protocol>
   presto_common
   presto_dynamic_config_reg_lib
-  presto_dynamic_sig_lib
   presto_exception
   presto_function_metadata
   presto_http
@@ -105,6 +104,7 @@ set_property(TARGET presto_server_lib PROPERTY JOB_POOL_LINK
                                                presto_link_job_pool)
 
 add_executable(presto_server PrestoMain.cpp)
+target_link_options(presto_server PRIVATE "-no-pie")
 
 # The below additional flags are necessary for resolving dependencies for
 # loading dynamic libraries.

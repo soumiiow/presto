@@ -42,7 +42,7 @@ There are many benefits to UDFs, such as:
       add_library(name_of_dynamic_fn SHARED TestFunction.cpp)
       target_link_libraries(name_of_dynamic_fn PRIVATE fmt::fmt Folly::folly gflags::gflags)
 
-3. Place your shared libraries in the plugin directory. The path to this directory needs to be the same as ``plugin.dir`` property set in :doc:`../plugin`.
+3. Place your shared libraries in the plugin directory. The path to this directory must be the same as the ``plugin.dir`` property set in :doc:`../plugin`.
 
 4. Create a Json configuration file in the same format as below:
 
@@ -81,4 +81,4 @@ There are many benefits to UDFs, such as:
    * ``nameSpace``: optional field. omitting this field gives the function the default namespace similarly to the function registeration. must match the namespace of the function.  
    * ``docString``, ``routineCharacteristics``, ``functionKind``: collected for checking metadata.
 
-5. Set the ``plugin.config`` property to the path of Json config. Instructions to set the property in :doc:`../plugin`.
+5. Set the ``plugin.config`` property to the path of the Json configuration file created in Step 4. See :doc:`../plugin`.
