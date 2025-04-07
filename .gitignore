@@ -42,6 +42,12 @@ cmake-build-*/
 a.out
 presto-native-execution/deps-download
 presto-native-execution/deps-install
+presto-native-execution/bin
+presto-native-execution/include
+presto-native-execution/lib
+presto-native-execution/scripts
+presto-native-execution/testcontainers/
+
 
 # Compiled Object files
 *.slo

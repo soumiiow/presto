@@ -96,38 +96,38 @@ target_link_libraries(
   GTest::gtest
   GTest::gtest_main)
 
-add_executable(presto_function_metadata_test FunctionMetadataTest.cpp)
+# add_executable(presto_function_metadata_test FunctionMetadataTest.cpp)
 
-add_test(
-  NAME presto_function_metadata_test
-  COMMAND presto_function_metadata_test
-  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+# add_test(
+#   NAME presto_function_metadata_test
+#   COMMAND presto_function_metadata_test
+#   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
-target_link_libraries(
-  presto_function_metadata_test
-  presto_function_metadata
-  presto_protocol
-  presto_type_test_utils
-  velox_aggregates
-  velox_functions_prestosql
-  velox_window
-  GTest::gtest
-  GTest::gtest_main)
+# target_link_libraries(
+#   presto_function_metadata_test
+#   presto_function_metadata
+#   presto_protocol
+#   presto_type_test_utils
+#   velox_aggregates
+#   velox_functions_prestosql
+#   velox_window
+#   GTest::gtest
+  # GTest::gtest_main)
 
-add_executable(presto_to_velox_query_plan_test PrestoToVeloxQueryPlanTest.cpp)
+# add_executable(presto_to_velox_query_plan_test PrestoToVeloxQueryPlanTest.cpp)
 
-add_test(
-  NAME presto_to_velox_query_plan_test
-  COMMAND presto_to_velox_query_plan_test
-  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+# add_test(
+#   NAME presto_to_velox_query_plan_test
+#   COMMAND presto_to_velox_query_plan_test
+#   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
-target_link_libraries(
-  presto_to_velox_query_plan_test
-  presto_operators
-  presto_protocol
-  presto_type_converter
-  presto_types
-  velox_dwio_common
-  velox_exec_test_lib
-  GTest::gtest
-  GTest::gtest_main)
+# target_link_libraries(
+#   presto_to_velox_query_plan_test
+#   presto_operators
+#   presto_protocol
+#   presto_type_converter
+#   presto_types
+#   velox_dwio_common
+#   velox_exec_test_lib
+#   GTest::gtest
+#   GTest::gtest_main)

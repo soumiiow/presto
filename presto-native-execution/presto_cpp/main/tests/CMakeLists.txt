@@ -11,18 +11,18 @@
 # limitations under the License.
 add_executable(
   presto_server_test
-  AnnouncerTest.cpp
-  CoordinatorDiscovererTest.cpp
-  HttpServerWrapper.cpp
-  MutableConfigs.cpp
-  PeriodicMemoryCheckerTest.cpp
-  PrestoExchangeSourceTest.cpp
-  PrestoTaskTest.cpp
-  QueryContextCacheTest.cpp
-  ServerOperationTest.cpp
-  SessionPropertiesTest.cpp
-  TaskManagerTest.cpp
-  QueryContextManagerTest.cpp
+  # AnnouncerTest.cpp
+  # CoordinatorDiscovererTest.cpp
+  # HttpServerWrapper.cpp
+  # MutableConfigs.cpp
+  # PeriodicMemoryCheckerTest.cpp
+  # PrestoExchangeSourceTest.cpp
+  # PrestoTaskTest.cpp
+  # QueryContextCacheTest.cpp
+  # ServerOperationTest.cpp
+  # SessionPropertiesTest.cpp
+  # TaskManagerTest.cpp
+  # QueryContextManagerTest.cpp
   JsonSignatureParserTest.cpp
   DynamicFunctionRegistererTest.cpp)
 

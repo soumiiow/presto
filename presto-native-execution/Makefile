@@ -57,13 +57,13 @@ SHELL := /bin/bash
 USE_NINJA ?= 1
 ifeq ($(USE_NINJA), 1)
 ifneq ($(shell which ninja), )
-CMAKE_FLAGS += -GNinja -DMAX_LINK_JOBS=$(MAX_LINK_JOBS) -DMAX_HIGH_MEM_JOBS=$(MAX_HIGH_MEM_JOBS)
+CMAKE_FLAGS += -GNinja -DMAX_LINK_JOBS=$(MAX_LINK_JOBS) -DMAX_HIGH_MEM_JOBS=$(MAX_HIGH_MEM_JOBS) -DCMAKE_POLICY_VERSION_MINIMUM=3.5
 endif
 endif
 
 ifndef USE_CCACHE
 ifneq ($(shell which ccache), )
-CMAKE_FLAGS += -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
+CMAKE_FLAGS += -DCMAKE_CXX_COMPILER_LAUNCHER=ccache 
 endif
 endif
 
@@ -73,8 +73,8 @@ clean:					#: Delete all build artifacts
 	rm -rf $(BUILD_BASE_DIR)
 
 velox-submodule:		#: Check out code for velox submodule
-	git submodule sync --recursive
-	git submodule update --init --recursive
+	# git submodule sync --recursive
+	# git submodule update --init --recursive
 
 submodules: velox-submodule
 
