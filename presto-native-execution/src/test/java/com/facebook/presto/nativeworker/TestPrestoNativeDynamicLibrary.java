@@ -16,7 +16,9 @@ package com.facebook.presto.nativeworker;
 import com.facebook.presto.tests.AbstractTestQueryFramework;
 import org.testng.annotations.Test;
 
-import static org.testng.Assert.assertEquals;
+import java.io.IOException;
+
+// import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
 public class TestPrestoNativeDynamicLibrary
@@ -33,7 +35,7 @@ public class TestPrestoNativeDynamicLibrary
     public void testShowFunctions()
             throws IOException, InterruptedException
     {
-        TimeUnit.SECONDS.sleep(20);
+        // TimeUnit.SECONDS.sleep(20);
         String sql = "SHOW FUNCTIONS";
         assertTrue(
                 computeActual(sql).toString().contains("dynamic"),
