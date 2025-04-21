@@ -14,6 +14,7 @@
 package com.facebook.presto.nativeworker;
 
 import com.facebook.presto.tests.AbstractTestQueryFramework;
+import static com.facebook.presto.sidecar.NativeSidecarPluginQueryRunnerUtils.setupNativeSidecarPlugin;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
@@ -28,7 +29,10 @@ public class TestPrestoNativeDynamicLibrary
     protected ContainerQueryRunner createQueryRunner()
             throws Exception
     {
-        return new ContainerQueryRunner();
+        // havent tested this yet!
+        DistributedQueryRunner queryRunner = ContainerQueryRunner();
+        setupNativeSidecarPlugin(queryRunner);
+        return queryRunner;        
     }
 
     @Test
