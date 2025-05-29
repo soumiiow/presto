@@ -11,14 +11,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.facebook.presto.nativeworker;
+package com.facebook.presto.sidecar;
 
+import com.facebook.presto.nativeworker.ContainerQueryRunner;
+import com.facebook.presto.nativeworker.PrestoNativeQueryRunnerUtils;
 import com.facebook.presto.tests.AbstractTestQueryFramework;
-import com.facebook.presto.tests.DistributedQueryRunner;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
-
 import static com.facebook.presto.sidecar.NativeSidecarPluginQueryRunnerUtils.setupNativeSidecarPlugin;
 import static org.testng.Assert.assertTrue;
 
@@ -30,7 +30,7 @@ public class TestPrestoNativeDynamicLibrary
             throws Exception
     {
         // havent tested this yet!
-        DistributedQueryRunner queryRunner = (DistributedQueryRunner) PrestoNativeQueryRunnerUtils.createQueryRunner(false, true, false, false);
+        ContainerQueryRunner queryRunner = (ContainerQueryRunner) PrestoNativeQueryRunnerUtils.createQueryRunner(false, true, false, false);
         setupNativeSidecarPlugin(queryRunner);
         return queryRunner;
     }
