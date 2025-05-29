@@ -1,0 +1,26 @@
+{
+  "dynamicUdfSignatureMap": {
+    "": {
+      "dynamic_varchar": [
+        {
+          "docString": "",
+          "functionKind": "SCALAR",
+          "outputType": "varchar",
+          "fileName": "libvarchar_function_dynamic",
+          "paramTypes": [
+            "varchar",
+            "varchar"
+          ],
+          "nameSpace": "native.default",
+          "overwrite": true,
+          "constraints": "",
+          "routineCharacteristics": {
+            "language": "CPP",
+            "determinism": "DETERMINISTIC",
+            "nullCallClause": "CALLED_ON_NULL_INPUT"
+          }
+        }
+      ]
+    }
+  }
+}
