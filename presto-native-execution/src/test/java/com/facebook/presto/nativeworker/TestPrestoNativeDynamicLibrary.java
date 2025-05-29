@@ -14,12 +14,12 @@
 package com.facebook.presto.nativeworker;
 
 import com.facebook.presto.tests.AbstractTestQueryFramework;
-import static com.facebook.presto.sidecar.NativeSidecarPluginQueryRunnerUtils.setupNativeSidecarPlugin;
+import com.facebook.presto.tests.DistributedQueryRunner;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
 
-// import static org.testng.Assert.assertEquals;
+import static com.facebook.presto.sidecar.NativeSidecarPluginQueryRunnerUtils.setupNativeSidecarPlugin;
 import static org.testng.Assert.assertTrue;
 
 public class TestPrestoNativeDynamicLibrary
@@ -30,9 +30,9 @@ public class TestPrestoNativeDynamicLibrary
             throws Exception
     {
         // havent tested this yet!
-        DistributedQueryRunner queryRunner = ContainerQueryRunner();
+        DistributedQueryRunner queryRunner = (DistributedQueryRunner) PrestoNativeQueryRunnerUtils.createQueryRunner(false, true, false, false);
         setupNativeSidecarPlugin(queryRunner);
-        return queryRunner;        
+        return queryRunner;
     }
 
     @Test
