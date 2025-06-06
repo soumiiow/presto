@@ -44,17 +44,17 @@ public class TestDynamicFunctions extends AbstractTestCustomFunctions {
                 .resolve("test")
                 .resolve("resources")
                 .resolve("plugin");
-        boolean sidecar = parseBoolean(System.getProperty("sidecarEnabled"));
+//        boolean sidecar = parseBoolean(System.getProperty("sidecarEnabled"));
         QueryRunner queryRunner = PrestoNativeQueryRunnerUtils.nativeHiveQueryRunnerBuilder()
                 .setStorageFormat(System.getProperty("storageFormat"))
                 .setAddStorageFormatToPath(true)
                 .setUseThrift(true)
-                .setCoordinatorSidecarEnabled(sidecar)
+                .setCoordinatorSidecarEnabled(true)
                 .setPluginDirectory(Optional.of(pluginDir.toString()))
                 .build();
-        if (sidecar) {
+//        if (sidecar) {
             setupNativeSidecarPlugin(queryRunner);
-        }
+//        }
         return queryRunner;
     }
 
