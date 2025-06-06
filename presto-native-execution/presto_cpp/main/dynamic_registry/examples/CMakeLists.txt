@@ -13,6 +13,8 @@
 add_library(function_dynamic SHARED DynamicFunction.cpp)
 add_library(varchar_function_dynamic SHARED DynamicVarcharFunction.cpp)
 add_library(non_default_function_dynamic SHARED DynamicNonDefaultFunction.cpp)
+add_library(add_function_dynamic SHARED CustomAddDynamic.cpp)
+
 
 set(CMAKE_DYLIB_TEST_LINK_LIBRARIES fmt::fmt gflags::gflags xsimd)
 target_link_libraries(function_dynamic
@@ -20,6 +22,8 @@ target_link_libraries(function_dynamic
 target_link_libraries(varchar_function_dynamic
                       PRIVATE ${CMAKE_DYLIB_TEST_LINK_LIBRARIES})
 target_link_libraries(non_default_function_dynamic
+                      PRIVATE ${CMAKE_DYLIB_TEST_LINK_LIBRARIES})
+target_link_libraries(add_function_dynamic
                       PRIVATE ${CMAKE_DYLIB_TEST_LINK_LIBRARIES})
 
 if(APPLE)
@@ -33,3 +37,5 @@ target_link_options(varchar_function_dynamic PRIVATE
                     ${COMMON_LIBRARY_LINK_OPTIONS})
 target_link_options(non_default_function_dynamic PRIVATE
                     ${COMMON_LIBRARY_LINK_OPTIONS})
+target_link_options(add_function_dynamic PRIVATE
+                    ${COMMON_LIBRARY_LINK_OPTIONS})                    
