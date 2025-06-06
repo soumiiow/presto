@@ -1,3 +1,16 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.facebook.presto.nativetests;
 
 import com.facebook.presto.nativeworker.NativeQueryRunnerUtils;
@@ -14,7 +27,9 @@ import java.util.Optional;
 import static com.facebook.presto.sidecar.NativeSidecarPluginQueryRunnerUtils.setupNativeSidecarPlugin;
 import static java.lang.Boolean.parseBoolean;
 
-public class TestDynamicFunctions extends AbstractTestCustomFunctions {
+public class TestDynamicFunctions
+        extends AbstractTestCustomFunctions
+{
     @Parameters("storageFormat")
     @Override
     protected void createTables()
@@ -38,24 +53,44 @@ public class TestDynamicFunctions extends AbstractTestCustomFunctions {
     protected QueryRunner createQueryRunner() throws Exception
     {
         Path workingDir = Paths.get(System.getProperty("user.dir"));
-        // TODO make sure in CI working dir is the right path. should be PRESTO_HOME there but locally, its at working dir.
+//        Path pluginDir = workingDir
+//                .resolve("presto-native-tests")
+//                .resolve("src")
+//                .resolve("test")
+//                .resolve("resources")
+//                .resolve("plugin");
         Path pluginDir = workingDir
-                .resolve("src")
-                .resolve("test")
-                .resolve("resources")
-                .resolve("plugin");
+                .resolve("presto-native-execution")
+                .resolve("_build")
+                .resolve("debug") //TODO change to release for CI
+                .resolve("presto_cpp")
+                .resolve("main")
+                .resolve("dynamic_registry")
+                .resolve("examples");
         boolean sidecar = parseBoolean(System.getProperty("sidecarEnabled"));
         QueryRunner queryRunner = PrestoNativeQueryRunnerUtils.nativeHiveQueryRunnerBuilder()
                 .setStorageFormat(System.getProperty("storageFormat"))
                 .setAddStorageFormatToPath(true)
                 .setUseThrift(true)
-                .setCoordinatorSidecarEnabled(sidecar)
+                .setCoordinatorSidecarEnabled(true)
                 .setPluginDirectory(Optional.of(pluginDir.toString()))
                 .build();
         if (sidecar) {
             setupNativeSidecarPlugin(queryRunner);
         }
         return queryRunner;
+    }
+
+    @Override
+    @Parameters("sidecarEnabled")
+    @Test
+    public void testCustomAdd()
+    {
+        if (parseBoolean(System.getProperty("sidecarEnabled"))) {
+            assertQuery(
+                    "SELECT custom_add(orderkey, custkey) FROM orders",
+                    "SELECT orderkey + custkey FROM orders");
+        }
     }
 
     // Aggregate functions are not supported currently.
