@@ -44,7 +44,7 @@ public class TestDynamicFunctions extends AbstractTestCustomFunctions {
                 .resolve("test")
                 .resolve("resources")
                 .resolve("plugin");
-//        boolean sidecar = parseBoolean(System.getProperty("sidecarEnabled"));
+        boolean sidecar = parseBoolean(System.getProperty("sidecarEnabled"));
         QueryRunner queryRunner = PrestoNativeQueryRunnerUtils.nativeHiveQueryRunnerBuilder()
                 .setStorageFormat(System.getProperty("storageFormat"))
                 .setAddStorageFormatToPath(true)
@@ -52,10 +52,22 @@ public class TestDynamicFunctions extends AbstractTestCustomFunctions {
                 .setCoordinatorSidecarEnabled(true)
                 .setPluginDirectory(Optional.of(pluginDir.toString()))
                 .build();
-//        if (sidecar) {
+        if (sidecar) {
             setupNativeSidecarPlugin(queryRunner);
-//        }
+        }
         return queryRunner;
+    }
+
+    @Override
+    @Parameters("sidecarEnabled")
+    @Test
+    public void testCustomAdd()
+    {
+        if (parseBoolean(System.getProperty("sidecarEnabled"))) {
+            assertQuery(
+                    "SELECT custom_add(orderkey, custkey) FROM orders",
+                    "SELECT orderkey + custkey FROM orders");
+        }
     }
 
     // Aggregate functions are not supported currently.
