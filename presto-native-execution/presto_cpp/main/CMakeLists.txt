@@ -47,7 +47,6 @@ target_link_libraries(
   $<TARGET_OBJECTS:presto_types>
   $<TARGET_OBJECTS:presto_protocol>
   presto_common
-  presto_dynamic_function_registrar
   presto_exception
   presto_function_metadata
   presto_connectors
