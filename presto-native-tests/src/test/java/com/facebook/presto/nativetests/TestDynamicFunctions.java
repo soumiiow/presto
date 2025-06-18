@@ -15,17 +15,24 @@ package com.facebook.presto.nativetests;
 
 import com.facebook.presto.nativeworker.NativeQueryRunnerUtils;
 import com.facebook.presto.nativeworker.PrestoNativeQueryRunnerUtils;
+import com.facebook.presto.testing.MaterializedResult;
+import com.facebook.presto.testing.MaterializedRow;
 import com.facebook.presto.testing.QueryRunner;
 import com.facebook.presto.tests.AbstractTestCustomFunctions;
+import org.intellij.lang.annotations.Language;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 import static com.facebook.presto.sidecar.NativeSidecarPluginQueryRunnerUtils.setupNativeSidecarPlugin;
 import static java.lang.Boolean.parseBoolean;
+import static java.lang.String.format;
+import static org.testng.Assert.fail;
 
 public class TestDynamicFunctions extends AbstractTestCustomFunctions {
     @Parameters("storageFormat")
@@ -51,16 +58,10 @@ public class TestDynamicFunctions extends AbstractTestCustomFunctions {
     protected QueryRunner createQueryRunner() throws Exception
     {
         Path workingDir = Paths.get(System.getProperty("user.dir"));
-//        Path pluginDir = workingDir
-//                .resolve("presto-native-tests")
-//                .resolve("src")
-//                .resolve("test")
-//                .resolve("resources")
-//                .resolve("plugin");
         Path pluginDir = workingDir
                 .resolve("presto-native-execution")
                 .resolve("_build")
-                .resolve("debug") //TODO change to release for CI
+                .resolve("release")
                 .resolve("presto_cpp")
                 .resolve("main")
                 .resolve("dynamic_registry")
