@@ -53,16 +53,10 @@ public class TestDynamicFunctions
     protected QueryRunner createQueryRunner() throws Exception
     {
         Path workingDir = Paths.get(System.getProperty("user.dir"));
-//        Path pluginDir = workingDir
-//                .resolve("presto-native-tests")
-//                .resolve("src")
-//                .resolve("test")
-//                .resolve("resources")
-//                .resolve("plugin");
         Path pluginDir = workingDir
                 .resolve("presto-native-execution")
                 .resolve("_build")
-                .resolve("debug") //TODO change to release for CI
+                .resolve("release")
                 .resolve("presto_cpp")
                 .resolve("main")
                 .resolve("dynamic_registry")

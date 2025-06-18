@@ -13,6 +13,8 @@
  */
 
  #include "presto_cpp/main/dynamic_registry/DynamicFunctionRegistrar.h"
+ #include "velox/expression/SimpleFunctionRegistry.h"
+ #include <iostream>
  // This file defines a mock function that will be dynamically linked and
  // registered. There are no restrictions as to how the function needs to be
  // defined, but the library (.so) needs to provide a `void registerExtensions()`
@@ -24,10 +26,10 @@
 namespace facebook::velox::common::dynamicRegistry {
 
     template <typename T>
-    struct DynamicFunction {
+    struct DynamicFunction2 {
       VELOX_DEFINE_FUNCTION_TYPES(T);
       FOLLY_ALWAYS_INLINE bool call(
-          int64_t& result,
+        out_type<int64_t>& result,
           const arg_type<int64_t>& x1,
           const arg_type<int64_t>& x2) {
             LOG(INFO) <<"inside the custom_add fn!!!";
@@ -42,7 +44,7 @@ extern "C" {
     // will be available and resolve when this library gets loaded.
     void registerExtensions() {
       facebook::presto::registerPrestoFunction<
-          facebook::velox::common::dynamicRegistry::DynamicFunction,
+          facebook::velox::common::dynamicRegistry::DynamicFunction2,
           int64_t,
           int64_t,
           int64_t>("custom_add");
