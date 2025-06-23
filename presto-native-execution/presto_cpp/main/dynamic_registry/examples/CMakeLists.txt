@@ -11,11 +11,13 @@
 # limitations under the License.
 
 add_library(presto_example_function_dynamic SHARED DynamicFunction.cpp)
-add_library(presto_example_varchar_function_dynamic SHARED DynamicVarcharFunction.cpp)
-add_library(presto_example_non_default_function_dynamic SHARED DynamicNonDefaultFunction.cpp)
+add_library(presto_example_varchar_function_dynamic SHARED
+            DynamicVarcharFunction.cpp)
+add_library(presto_example_non_default_function_dynamic SHARED
+            DynamicNonDefaultFunction.cpp)
 add_library(presto_example_add_function_dynamic SHARED CustomAddDynamic.cpp)
 
-set(CMAKE_DYLIB_TEST_LINK_LIBRARIES fmt::fmt
+set(CMAKE_DYLIB_TEST_LINK_LIBRARIES presto_dynamic_function_registrar fmt::fmt
                                     gflags::gflags xsimd)
 target_link_libraries(presto_example_function_dynamic
                       PRIVATE ${CMAKE_DYLIB_TEST_LINK_LIBRARIES})
