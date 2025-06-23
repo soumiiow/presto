@@ -532,8 +532,8 @@ public class PrestoNativeQueryRunnerUtils
                         return new ProcessBuilder(prestoServerPath, "--logtostderr=1", "--v=1", "--velox_ssd_odirect=false")
                                 .directory(tempDirectoryPath.toFile())
                                 .redirectErrorStream(true)
-                                .redirectOutput(ProcessBuilder.Redirect.to(tempDirectoryPath.resolve("worker." + workerIndex + ".out").toFile()))
-                                .redirectError(ProcessBuilder.Redirect.to(tempDirectoryPath.resolve("worker." + workerIndex + ".out").toFile()))
+                                .redirectOutput(ProcessBuilder.Redirect.INHERIT)
+                                .redirectError(ProcessBuilder.Redirect.INHERIT)
                                 .start();
                     }
                     catch (IOException e) {
