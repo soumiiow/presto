@@ -45,6 +45,7 @@
 #include "velox/common/base/StatsReporter.h"
 #include "velox/common/caching/CacheTTLController.h"
 #include "velox/common/caching/SsdCache.h"
+#include "velox/common/dynamic_registry/DynamicLibraryLoader.h"
 #include "velox/common/file/FileSystems.h"
 #include "velox/common/memory/SharedArbitrator.h"
 #include "velox/connectors/Connector.h"
@@ -64,6 +65,10 @@
 #include "velox/serializers/CompactRowSerializer.h"
 #include "velox/serializers/PrestoSerializer.h"
 #include "velox/serializers/UnsafeRowSerializer.h"
+
+#ifdef PRESTO_ENABLE_CUDF
+#include "velox/experimental/cudf/exec/ToCudf.h"
+#endif
 
 #ifdef PRESTO_ENABLE_REMOTE_FUNCTIONS
 #include "presto_cpp/main/RemoteFunctionRegisterer.h"
@@ -85,6 +90,8 @@ constexpr char const* kHttps = "https";
 constexpr char const* kTaskUriFormat =
     "{}://{}:{}"; // protocol, address and port
 constexpr char const* kConnectorName = "connector.name";
+constexpr char const* kLinuxSharedLibExt = ".so";
+constexpr char const* kMacOSSharedLibExt = ".dylib";
 
 protocol::NodeState convertNodeState(presto::NodeState nodeState) {
   switch (nodeState) {
@@ -139,6 +146,26 @@ bool cachePeriodicPersistenceEnabled() {
       systemConfig->asyncCacheSsdGb() > 0 &&
       systemConfig->asyncCachePersistenceInterval() >
       std::chrono::seconds::zero();
+}
+
+bool isSharedLibrary(const fs::path& path) {
+  std::string pathExt = path.extension().string();
+  std::transform(pathExt.begin(), pathExt.end(), pathExt.begin(), ::tolower);
+  return pathExt == kLinuxSharedLibExt || pathExt == kMacOSSharedLibExt;
+}
+
+void registerVeloxCudf() {
+#ifdef PRESTO_ENABLE_CUDF
+ facebook::velox::cudf_velox::registerCudf();
+ PRESTO_STARTUP_LOG(INFO) << "cuDF is registered.";
+#endif
+}
+
+void unregisterVeloxCudf() {
+#ifdef PRESTO_ENABLE_CUDF
+ facebook::velox::cudf_velox::unregisterCudf();
+ PRESTO_SHUTDOWN_LOG(INFO) << "cuDF is unregistered.";
+#endif
 }
 
 } // namespace
@@ -365,10 +392,12 @@ void PrestoServer::run() {
           });
     }
   }
+  registerVeloxCudf();
   registerFunctions();
   registerRemoteFunctions();
   registerVectorSerdes();
   registerPrestoPlanNodeSerDe();
+  registerDynamicFunctions();
 
   const auto numExchangeHttpClientIoThreads = std::max<size_t>(
       systemConfig->exchangeHttpClientNumIoThreadsHwMultiplier() *
@@ -637,6 +666,7 @@ void PrestoServer::run() {
   unregisterFileReadersAndWriters();
   unregisterFileSystems();
   unregisterConnectors();
+  unregisterVeloxCudf();
 
   PRESTO_SHUTDOWN_LOG(INFO)
       << "Joining Driver CPU Executor '" << driverExecutor_->getName()
@@ -1632,6 +1662,33 @@ protocol::NodeStatus PrestoServer::fetchNodeStatus() {
       nonHeapUsed};
 
   return nodeStatus;
+}
+
+void PrestoServer::registerDynamicFunctions() {
+  // For using the non-throwing overloads of functions below.
+  std::error_code ec;
+  const auto systemConfig = SystemConfig::instance();
+  fs::path pluginDir = std::filesystem::current_path().append("plugin");
+  if (!systemConfig->pluginDir().empty()) {
+    pluginDir = systemConfig->pluginDir();
+  }
+  // If it is a valid directory, traverse and call dynamic function loader.
+  if (fs::is_directory(pluginDir, ec)) {
+    PRESTO_STARTUP_LOG(INFO)
+        << "Loading dynamic libraries from directory path: " << pluginDir;
+    for (const auto& dirEntry :
+         std::filesystem::directory_iterator(pluginDir)) {
+      if (isSharedLibrary(dirEntry.path())) {
+        PRESTO_STARTUP_LOG(INFO)
+            << "Loading dynamic libraries from: " << dirEntry.path().string();
+        velox::loadDynamicLibrary(dirEntry.path().c_str());
+      }
+    }
+  } else {
+    PRESTO_STARTUP_LOG(INFO)
+        << "Plugin directory path: " << pluginDir << " is invalid.";
+    return;
+  }
 }
 
 } // namespace facebook::presto
