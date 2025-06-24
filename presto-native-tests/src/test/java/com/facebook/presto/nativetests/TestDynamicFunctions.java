@@ -20,12 +20,14 @@ import com.facebook.presto.tests.AbstractTestCustomFunctions;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
 
 import static com.facebook.presto.sidecar.NativeSidecarPluginQueryRunnerUtils.setupNativeSidecarPlugin;
 import static java.lang.Boolean.parseBoolean;
+import static org.testng.Assert.assertTrue;
 
 public class TestDynamicFunctions
         extends AbstractTestCustomFunctions
@@ -56,11 +58,13 @@ public class TestDynamicFunctions
         Path pluginDir = workingDir
                 .resolve("presto-native-execution")
                 .resolve("_build")
-                .resolve("release")
+                .resolve("debug")
                 .resolve("presto_cpp")
                 .resolve("main")
                 .resolve("dynamic_registry")
                 .resolve("examples");
+        assertTrue(Files.exists(pluginDir), pluginDir.toString());
+        assertTrue(pluginDir.toString().contains("presto-native-execution/_build/debug"));
         boolean sidecar = parseBoolean(System.getProperty("sidecarEnabled"));
         QueryRunner queryRunner = PrestoNativeQueryRunnerUtils.nativeHiveQueryRunnerBuilder()
                 .setStorageFormat(System.getProperty("storageFormat"))
