@@ -54,17 +54,41 @@ public class TestDynamicFunctions
     @Override
     protected QueryRunner createQueryRunner() throws Exception
     {
-        Path workingDir = Paths.get(System.getProperty("user.dir"));
-        Path pluginDir = workingDir
+        Path workingDir = Paths.get(System.getProperty("user.dir")).toAbsolutePath();
+        Path prestoRoot = workingDir;
+        // Traverse upward until finding the 'presto-native-execution' directory.
+        while (prestoRoot != null && !Files.exists(prestoRoot.resolve("presto-native-execution"))) {
+            prestoRoot = prestoRoot.getParent();
+        }
+        if (prestoRoot == null) {
+            throw new IllegalStateException("Could not locate presto root directory.");
+        }
+        Path pluginDir = prestoRoot
                 .resolve("presto-native-execution")
                 .resolve("_build")
-                .resolve("debug")
+                .resolve("release")
                 .resolve("presto_cpp")
                 .resolve("main")
                 .resolve("dynamic_registry")
                 .resolve("examples");
+        Path testPlugin1 = prestoRoot
+                .resolve("presto-native-execution")
+                .resolve("_build")
+                .resolve("release");
+        Path testPlugin2 = testPlugin1
+                .resolve("presto_cpp")
+                .resolve("main");
+        Path testPlugin3 = testPlugin2
+                .resolve("dynamic_registry");
+        Path testPlugin4 = testPlugin3
+                .resolve("examples");
+        assertTrue(Files.exists(testPlugin1), testPlugin1.toString());
+        assertTrue(Files.exists(testPlugin2), testPlugin2.toString());
+        assertTrue(Files.exists(testPlugin3), testPlugin3.toString());
+        assertTrue(Files.exists(testPlugin4), testPlugin4.toString());
+
         assertTrue(Files.exists(pluginDir), pluginDir.toString());
-        assertTrue(pluginDir.toString().contains("presto-native-execution/_build/debug"));
+        assertTrue(pluginDir.toString().contains("presto-native-execution/_build/release"));
         boolean sidecar = parseBoolean(System.getProperty("sidecarEnabled"));
         QueryRunner queryRunner = PrestoNativeQueryRunnerUtils.nativeHiveQueryRunnerBuilder()
                 .setStorageFormat(System.getProperty("storageFormat"))
